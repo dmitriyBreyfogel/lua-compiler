@@ -10,6 +10,7 @@
 
 NAME_START    [A-Za-z_]
 NAME_SYMBOL   [A-Za-z0-9_]
+WHITESPACES   [ \t\r\n\f\v]+
 
 DECIMAL_DIGIT          [0-9]
 HEXADECIMAL_DIGIT      [0-9A-Fa-f]
@@ -106,6 +107,8 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
 }
+
+{WHITESPACES}    ;
 
 .|\n        { std::cout << "Unknown token: " << yytext << "\n"; }
 
