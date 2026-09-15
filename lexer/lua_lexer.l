@@ -206,6 +206,9 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
     }
 }
 
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\z[ \t\r\n\f\v]* {
+}
+
 <DOUBLE_QUOTED_STRING>\" {
     std::cout << "Found string: " << stringBuffer << "\n";
     BEGIN(INITIAL);
