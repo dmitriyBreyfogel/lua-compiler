@@ -79,12 +79,52 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 \"          { stringBuffer.clear(); BEGIN(DOUBLE_QUOTED_STRING); }
 \'          { stringBuffer.clear(); BEGIN(SINGLE_QUOTED_STRING); }
 
-<DOUBLE_QUOTED_STRING>[^"\n]+ {
+<DOUBLE_QUOTED_STRING>[^"\\\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
-<SINGLE_QUOTED_STRING>[^'\n]+ {
+<SINGLE_QUOTED_STRING>[^'\\\n]+ {
     stringBuffer.append(yytext, yyleng);
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\a {
+    stringBuffer.push_back('\a');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\b {
+    stringBuffer.push_back('\b');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\f {
+    stringBuffer.push_back('\f');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\n {
+    stringBuffer.push_back('\n');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\r {
+    stringBuffer.push_back('\r');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\t {
+    stringBuffer.push_back('\t');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\v {
+    stringBuffer.push_back('\v');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\\ {
+    stringBuffer.push_back('\\');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\" {
+    stringBuffer.push_back('"');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\' {
+    stringBuffer.push_back('\'');
 }
 
 <DOUBLE_QUOTED_STRING>\" {
