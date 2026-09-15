@@ -5,6 +5,7 @@
 
 %x DOUBLE_QUOTED_STRING
 %x SINGLE_QUOTED_STRING
+%x LONG_STRING
 
 %{
 #include <cerrno>
@@ -13,6 +14,7 @@
 #include <string>
 
 static std::string stringBuffer;
+static std::string longClose;
 
 static int hexDigitValue(char symbol)
 {
@@ -127,6 +129,36 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 }
 
 --[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
+
+\[=*\[ {
+    stringBuffer.clear();
+    longClose = "]";
+    longClose.append(yyleng - 2, '=');
+    longClose.push_back(']');
+    BEGIN(LONG_STRING);
+}
+
+<LONG_STRING>[^\]]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<LONG_STRING>\]=*\] {
+    if (longClose == std::string(yytext, yyleng)) {
+        std::cout << "Found long string: " << stringBuffer << "\n";
+        BEGIN(INITIAL);
+    } else {
+        stringBuffer.append(yytext, yyleng);
+    }
+}
+
+<LONG_STRING>\] {
+    stringBuffer.push_back(']');
+}
+
+<LONG_STRING><<EOF>> {
+    std::cout << "Error: unterminated long string before end of file\n";
+    BEGIN(INITIAL);
+}
 
 \"          { stringBuffer.clear(); BEGIN(DOUBLE_QUOTED_STRING); }
 \'          { stringBuffer.clear(); BEGIN(SINGLE_QUOTED_STRING); }
