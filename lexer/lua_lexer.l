@@ -349,6 +349,6 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 
 {WHITESPACES}    ;
 
-.|\n        { std::cout << "Unknown token: " << yytext << "\n"; }
+.|\n        { std::cout << "Error: unknown token: " << yytext << "\n"; }
 
 %%
