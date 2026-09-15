@@ -3,9 +3,15 @@
 %option yylineno
 %option nodefault
 
+%x DOUBLE_QUOTED_STRING
+%x SINGLE_QUOTED_STRING
+
 %{
 #include <cstdlib>
 #include <iostream>
+#include <string>
+
+static std::string stringBuffer;
 %}
 
 NAME_START    [A-Za-z_]
@@ -69,6 +75,27 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 }
 
 --[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
+
+\"          { stringBuffer.clear(); BEGIN(DOUBLE_QUOTED_STRING); }
+\'          { stringBuffer.clear(); BEGIN(SINGLE_QUOTED_STRING); }
+
+<DOUBLE_QUOTED_STRING>[^"\n]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<SINGLE_QUOTED_STRING>[^'\n]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<DOUBLE_QUOTED_STRING>\" {
+    std::cout << "Found string: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_QUOTED_STRING>\' {
+    std::cout << "Found string: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
 
 "..."       { std::cout << "Found varargs: " << yytext << "\n"; }
 ".."        { std::cout << "Found operator: " << yytext << "\n"; }
