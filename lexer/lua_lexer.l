@@ -67,6 +67,42 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
     std::cout << "Found integer: " << std::strtoll(yytext, nullptr, 10) << "\n";
 }
 
+"..."       { std::cout << "Found varargs: " << yytext << "\n"; }
+".."        { std::cout << "Found operator: " << yytext << "\n"; }
+"//"        { std::cout << "Found operator: " << yytext << "\n"; }
+"<<"        { std::cout << "Found operator: " << yytext << "\n"; }
+">>"        { std::cout << "Found operator: " << yytext << "\n"; }
+"=="        { std::cout << "Found operator: " << yytext << "\n"; }
+"~="        { std::cout << "Found operator: " << yytext << "\n"; }
+"<="        { std::cout << "Found operator: " << yytext << "\n"; }
+">="        { std::cout << "Found operator: " << yytext << "\n"; }
+"::"        { std::cout << "Found label separator: " << yytext << "\n"; }
+
+"+"         { std::cout << "Found operator: " << yytext << "\n"; }
+"-"         { std::cout << "Found operator: " << yytext << "\n"; }
+"*"         { std::cout << "Found operator: " << yytext << "\n"; }
+"/"         { std::cout << "Found operator: " << yytext << "\n"; }
+"%"         { std::cout << "Found operator: " << yytext << "\n"; }
+"^"         { std::cout << "Found operator: " << yytext << "\n"; }
+"#"         { std::cout << "Found operator: " << yytext << "\n"; }
+"&"         { std::cout << "Found operator: " << yytext << "\n"; }
+"~"         { std::cout << "Found operator: " << yytext << "\n"; }
+"|"         { std::cout << "Found operator: " << yytext << "\n"; }
+"="         { std::cout << "Found operator: " << yytext << "\n"; }
+"<"         { std::cout << "Found operator: " << yytext << "\n"; }
+">"         { std::cout << "Found operator: " << yytext << "\n"; }
+
+"("         { std::cout << "Found left parenthesis: " << yytext << "\n"; }
+")"         { std::cout << "Found right parenthesis: " << yytext << "\n"; }
+"["         { std::cout << "Found left bracket: " << yytext << "\n"; }
+"]"         { std::cout << "Found right bracket: " << yytext << "\n"; }
+"{"         { std::cout << "Found left brace: " << yytext << "\n"; }
+"}"         { std::cout << "Found right brace: " << yytext << "\n"; }
+";"         { std::cout << "Found semicolon: " << yytext << "\n"; }
+":"         { std::cout << "Found colon: " << yytext << "\n"; }
+","         { std::cout << "Found comma: " << yytext << "\n"; }
+"."         { std::cout << "Found dot: " << yytext << "\n"; }
+
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
 }
