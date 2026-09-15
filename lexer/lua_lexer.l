@@ -6,6 +6,7 @@
 %x DOUBLE_QUOTED_STRING
 %x SINGLE_QUOTED_STRING
 %x LONG_STRING
+%x MULTILINE_COMMENT
 
 %{
 #include <cerrno>
@@ -126,6 +127,36 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 
 {DECIMAL_INTEGER} {
     std::cout << "Found integer: " << std::strtoll(yytext, nullptr, 10) << "\n";
+}
+
+--\[=*\[ {
+    stringBuffer.clear();
+    longClose = "]";
+    longClose.append(yyleng - 4, '=');
+    longClose.push_back(']');
+    BEGIN(MULTILINE_COMMENT);
+}
+
+<MULTILINE_COMMENT>[^\]]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<MULTILINE_COMMENT>\]=*\] {
+    if (longClose == std::string(yytext, yyleng)) {
+        std::cout << "Found multiline comment: " << stringBuffer << "\n";
+        BEGIN(INITIAL);
+    } else {
+        stringBuffer.append(yytext, yyleng);
+    }
+}
+
+<MULTILINE_COMMENT>\] {
+    stringBuffer.push_back(']');
+}
+
+<MULTILINE_COMMENT><<EOF>> {
+    std::cout << "Error: unterminated multiline comment before end of file\n";
+    BEGIN(INITIAL);
 }
 
 --[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
