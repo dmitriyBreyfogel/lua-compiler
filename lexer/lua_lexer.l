@@ -209,6 +209,31 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\z[ \t\r\n\f\v]* {
 }
 
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\. {
+    std::cout << "Error: invalid string escape: " << yytext << "\n";
+    stringBuffer.push_back(yytext[1]);
+}
+
+<DOUBLE_QUOTED_STRING>\n {
+    std::cout << "Error: unterminated double-quoted string\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_QUOTED_STRING>\n {
+    std::cout << "Error: unterminated single-quoted string\n";
+    BEGIN(INITIAL);
+}
+
+<DOUBLE_QUOTED_STRING><<EOF>> {
+    std::cout << "Error: unterminated double-quoted string before end of file\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_QUOTED_STRING><<EOF>> {
+    std::cout << "Error: unterminated single-quoted string before end of file\n";
+    BEGIN(INITIAL);
+}
+
 <DOUBLE_QUOTED_STRING>\" {
     std::cout << "Found string: " << stringBuffer << "\n";
     BEGIN(INITIAL);
