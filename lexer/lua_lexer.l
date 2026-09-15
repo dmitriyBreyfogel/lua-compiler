@@ -7,11 +7,63 @@
 %x SINGLE_QUOTED_STRING
 
 %{
+#include <cerrno>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 
 static std::string stringBuffer;
+
+static int hexDigitValue(char symbol)
+{
+    if (symbol >= '0' && symbol <= '9') {
+        return symbol - '0';
+    }
+
+    if (symbol >= 'a' && symbol <= 'f') {
+        return 10 + symbol - 'a';
+    }
+
+    if (symbol >= 'A' && symbol <= 'F') {
+        return 10 + symbol - 'A';
+    }
+
+    return -1;
+}
+
+static void appendUtf8(unsigned long long value)
+{
+    if (value <= 0x7F) {
+        stringBuffer.push_back(static_cast<char>(value));
+    } else if (value <= 0x7FF) {
+        stringBuffer.push_back(static_cast<char>(0xC0 | ((value >> 6) & 0x1F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
+    } else if (value <= 0xFFFF) {
+        stringBuffer.push_back(static_cast<char>(0xE0 | ((value >> 12) & 0x0F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
+    } else if (value <= 0x1FFFFF) {
+        stringBuffer.push_back(static_cast<char>(0xF0 | ((value >> 18) & 0x07)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 12) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
+    } else if (value <= 0x3FFFFFF) {
+        stringBuffer.push_back(static_cast<char>(0xF8 | ((value >> 24) & 0x03)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 18) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 12) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
+    } else if (value <= 0x7FFFFFFF) {
+        stringBuffer.push_back(static_cast<char>(0xFC | ((value >> 30) & 0x01)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 24) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 18) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 12) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
+        stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
+    } else {
+        appendUtf8(0xFFFD);
+    }
+}
 %}
 
 NAME_START    [A-Za-z_]
@@ -125,6 +177,33 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\' {
     stringBuffer.push_back('\'');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x[0-9A-Fa-f]{2} {
+    int high = hexDigitValue(yytext[2]);
+    int low = hexDigitValue(yytext[3]);
+    stringBuffer.push_back(static_cast<char>((high << 4) | low));
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\[0-9]{1,3} {
+    long value = std::strtol(yytext + 1, nullptr, 10);
+
+    if (value > 255) {
+        value = 255;
+    }
+
+    stringBuffer.push_back(static_cast<char>(value));
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]+\} {
+    errno = 0;
+    unsigned long long value = std::strtoull(yytext + 3, nullptr, 16);
+
+    if (errno == ERANGE || value >= 0x80000000ULL) {
+        std::cout << "Invalid unicode escape: " << yytext << "\n";
+    } else {
+        appendUtf8(value);
+    }
 }
 
 <DOUBLE_QUOTED_STRING>\" {
