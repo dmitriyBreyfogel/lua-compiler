@@ -3,9 +3,16 @@
 %option yylineno
 %option nodefault
 
+/* Строки в двойных кавычках */
 %x DOUBLE_QUOTED_STRING
+
+/* Строки в одинарных кавычках */
 %x SINGLE_QUOTED_STRING
+
+/* Длинные строки */
 %x LONG_STRING
+
+/* Многострочные комментарии */
 %x MULTILINE_COMMENT
 
 %{
@@ -14,9 +21,11 @@
 #include <iostream>
 #include <string>
 
+/* Буферы для составных лексем */
 static std::string stringBuffer;
 static std::string longClose;
 
+/* Возвращает числовое значение hex-цифры */
 static int hexDigitValue(char symbol)
 {
     if (symbol >= '0' && symbol <= '9') {
@@ -34,6 +43,7 @@ static int hexDigitValue(char symbol)
     return -1;
 }
 
+/* Добавляет Unicode code point в строковый буфер */
 static void appendUtf8(unsigned long long value)
 {
     if (value <= 0x7F) {
@@ -69,6 +79,7 @@ static void appendUtf8(unsigned long long value)
 }
 %}
 
+/* Макросы */
 NAME_START    [A-Za-z_]
 NAME_SYMBOL   [A-Za-z0-9_]
 WHITESPACES   [ \t\r\n\f\v]+
