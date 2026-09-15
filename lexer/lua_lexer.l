@@ -68,6 +68,8 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
     std::cout << "Found integer: " << std::strtoll(yytext, nullptr, 10) << "\n";
 }
 
+--[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
+
 "..."       { std::cout << "Found varargs: " << yytext << "\n"; }
 ".."        { std::cout << "Found operator: " << yytext << "\n"; }
 "//"        { std::cout << "Found operator: " << yytext << "\n"; }
