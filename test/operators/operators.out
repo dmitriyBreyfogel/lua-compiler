@@ -1,0 +1,33 @@
+Found varargs: ...
+Found operator: ..
+Found operator: //
+Found operator: <<
+Found operator: >>
+Found operator: ==
+Found operator: ~=
+Found operator: <=
+Found operator: >=
+Found label separator: ::
+Found operator: +
+Found operator: -
+Found operator: *
+Found operator: /
+Found operator: %
+Found operator: ^
+Found operator: #
+Found operator: &
+Found operator: ~
+Found operator: |
+Found operator: =
+Found operator: <
+Found operator: >
+Found left parenthesis: (
+Found right parenthesis: )
+Found left bracket: [
+Found right bracket: ]
+Found left brace: {
+Found right brace: }
+Found semicolon: ;
+Found colon: :
+Found comma: ,
+Found dot: .

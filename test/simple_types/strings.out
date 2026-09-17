@@ -1,0 +1,15 @@
+Found string: plain
+Found string: ABC
+Found string: quotes: " ' \
+Found string: line
+break
+Found string: continued
+line
+Found string: beforeafter
+Found string: A😀
+Error: invalid string escape: \q
+Error: decimal escape too large: \256
+Found long string: long
+
+Found long string: text
+Error: invalid long string delimiter: [=

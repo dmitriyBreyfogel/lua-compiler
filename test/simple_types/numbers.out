@@ -1,0 +1,25 @@
+Found integer: 42
+Found integer: 0
+Found float: 3.14
+Found float: 0.25
+Found float: 1
+Found float: 0.5
+Found float: 0.01
+Found float: 340
+Found hexadecimal integer: 255
+Found hexadecimal float: 1
+Found hexadecimal float: 3
+Found hexadecimal float: 162.188
+Found float: 9.22337e+18
+Found hexadecimal integer: -9223372036854775808
+Found hexadecimal integer: -1
+Found hexadecimal integer: 0
+Found hexadecimal integer: 30
+Found operator: +
+Found integer: 2
+Error: malformed number: 123abc
+Error: malformed number: 0x
+Error: malformed number: 1e
+Error: malformed number: 0x1p
+Error: malformed number: 1..2
+Error: malformed number: 1...
