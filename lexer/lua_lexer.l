@@ -19,6 +19,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <string>
 
 /* Буферы для составных лексем */
@@ -42,6 +43,27 @@ static int hexDigitValue(char symbol)
     }
 
     return -1;
+}
+
+/* Преобразует hex integer в Lua integer с оборачиванием */
+static long long parseHexadecimalInteger(const char* text)
+{
+    unsigned long long value = 0;
+
+    for (const char* character = text + 2; *character != '\0'; ++character) {
+        value = value * 16 + static_cast<unsigned long long>(hexDigitValue(*character));
+    }
+
+    const unsigned long long maximumInteger =
+        static_cast<unsigned long long>(std::numeric_limits<long long>::max());
+
+    if (value <= maximumInteger) {
+        return static_cast<long long>(value);
+    }
+
+    const unsigned long long maximumUnsignedInteger =
+        std::numeric_limits<unsigned long long>::max();
+    return -1 - static_cast<long long>(maximumUnsignedInteger - value);
 }
 
 /* Добавляет Unicode code point в строковый буфер */
@@ -101,14 +123,22 @@ static void printNumberToken(const char* text)
 
     if (isHexadecimal && !isFloat) {
         std::cout << "Found hexadecimal integer: "
-                  << std::strtoll(text, nullptr, 16) << "\n";
+                  << parseHexadecimalInteger(text) << "\n";
     } else if (isHexadecimal) {
         std::cout << "Found hexadecimal float: " << value << "\n";
     } else if (isFloat) {
         std::cout << "Found float: " << value << "\n";
     } else {
+        errno = 0;
+        long long integer = std::strtoll(text, nullptr, 10);
+
+        if (errno == ERANGE) {
+            std::cout << "Found float: " << value << "\n";
+            return;
+        }
+
         std::cout << "Found integer: "
-                  << std::strtoll(text, nullptr, 10) << "\n";
+                  << integer << "\n";
     }
 }
 %}
