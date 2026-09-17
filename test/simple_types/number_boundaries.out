@@ -1,0 +1,12 @@
+Found float: 3
+Found float: 3.1416
+Found float: 3.1416
+Found float: 340
+Found hexadecimal integer: 255
+Found hexadecimal integer: 12499674
+Found hexadecimal float: 0.117188
+Found hexadecimal float: 1984
+Found hexadecimal float: 3.14159
+Error: malformed number: 0X
+Error: malformed number: 1E
+Error: malformed number: 0X1P

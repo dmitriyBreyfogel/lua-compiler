@@ -58,6 +58,7 @@ run_unicode_boundary_test() {
 }
 
 run_test test/simple_types/numbers
+run_test test/simple_types/number_boundaries
 run_test test/simple_types/strings
 run_test test/simple_types/single_quoted_strings
 run_control_escape_test
