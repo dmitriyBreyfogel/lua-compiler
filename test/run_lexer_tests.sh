@@ -10,9 +10,10 @@ fi
 compiler="$1"
 actual_output="$(mktemp)"
 generated_output="$(mktemp)"
+generated_input="$(mktemp)"
 
 cleanup() {
-    rm -f "$actual_output" "$generated_output"
+    rm -f "$actual_output" "$generated_output" "$generated_input"
 }
 
 trap cleanup EXIT HUP INT TERM
@@ -57,6 +58,24 @@ run_unicode_boundary_test() {
     run_generated_test test/simple_types/unicode_boundaries.lua
 }
 
+run_end_of_file_test() {
+    printf '%s' '"unfinished double string' > "$generated_input"
+    printf '%s\n' 'Error: unterminated double-quoted string before end of file' > "$generated_output"
+    run_generated_test "$generated_input"
+
+    printf '%s' "'unfinished single string" > "$generated_input"
+    printf '%s\n' 'Error: unterminated single-quoted string before end of file' > "$generated_output"
+    run_generated_test "$generated_input"
+
+    printf '%s' '[=[unfinished long string' > "$generated_input"
+    printf '%s\n' 'Error: unterminated long string before end of file' > "$generated_output"
+    run_generated_test "$generated_input"
+
+    printf '%s' '--[==[unfinished multiline comment' > "$generated_input"
+    printf '%s\n' 'Error: unterminated multiline comment before end of file' > "$generated_output"
+    run_generated_test "$generated_input"
+}
+
 run_test test/simple_types/numbers
 run_test test/simple_types/number_boundaries
 run_test test/simple_types/strings
@@ -64,6 +83,7 @@ run_test test/simple_types/single_quoted_strings
 run_test test/simple_types/long_delimiters
 run_control_escape_test
 run_unicode_boundary_test
+run_end_of_file_test
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
