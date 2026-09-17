@@ -52,10 +52,16 @@ run_control_escape_test() {
     run_generated_test test/simple_types/control_escapes.lua
 }
 
+run_unicode_boundary_test() {
+    printf '%b' 'Found string: \0000\0177\0302\0200\0337\0277\0340\0240\0200\0357\0277\0277\0360\0220\0200\0200\0367\0277\0277\0277\0370\0210\0200\0200\0200\0373\0277\0277\0277\0277\0374\0204\0200\0200\0200\0200\0375\0277\0277\0277\0277\0277\n' > "$generated_output"
+    run_generated_test test/simple_types/unicode_boundaries.lua
+}
+
 run_test test/simple_types/numbers
 run_test test/simple_types/strings
 run_test test/simple_types/single_quoted_strings
 run_control_escape_test
+run_unicode_boundary_test
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
