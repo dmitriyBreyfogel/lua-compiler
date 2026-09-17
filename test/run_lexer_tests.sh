@@ -103,6 +103,7 @@ run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
 run_test test/comments/long_delimiters
+run_test test/comments/comment_opening_boundaries
 run_test test/comments/comments_in_code
 run_test test/keywords/keywords
 run_test test/operators/operators
@@ -111,6 +112,7 @@ run_test test/identifiers/identifiers
 run_test test/identifiers/keyword_boundaries
 run_test test/errors/invalid_escapes
 run_test test/errors/malformed_string_escapes
+run_test test/errors/invalid_long_delimiters
 run_test test/errors/unterminated_strings
 run_test test/errors/unterminated_long_string
 run_test test/errors/unterminated_multiline_comment
