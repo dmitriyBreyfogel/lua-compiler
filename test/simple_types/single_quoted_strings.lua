@@ -1,0 +1,7 @@
+'plain text'
+'It\'s valid'
+'double quote: "'
+'backslash: \\'
+'line\nfeed'
+'\x48\101'
+'\u{41}'

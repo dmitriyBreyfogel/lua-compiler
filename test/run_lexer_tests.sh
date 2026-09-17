@@ -35,6 +35,7 @@ run_test() {
 
 run_test test/simple_types/numbers
 run_test test/simple_types/strings
+run_test test/simple_types/single_quoted_strings
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
