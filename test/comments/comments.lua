@@ -1,5 +1,7 @@
 -- single-line comment
 -- однострочный комментарий
+--[not a multiline comment
+--[[inline multiline comment]]
 --[[
 multiline comment
 многострочный комментарий

@@ -1,0 +1,4 @@
+Error: invalid string escape: \x
+Error: invalid string escape: \u
+Invalid unicode escape: \u{80000000}
+Error: unknown token: @
