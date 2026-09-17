@@ -1,0 +1,46 @@
+Found single-line comment: -- перед кодом / before code
+Found keyword: global
+Found identifier: result
+Found keyword: local
+Found identifier: value
+Found operator: =
+Found operator: -
+Found hexadecimal integer: 10
+Found operator: +
+Found float: 0.5
+Found single-line comment: -- после числа
+Found identifier: result
+Found operator: =
+Found long string: long value
+Found operator: ..
+Found string: !
+Found identifier: data
+Found operator: =
+Found left brace: {
+Found left bracket: [
+Found integer: 1
+Found right bracket: ]
+Found operator: =
+Found string: one
+Found comma: ,
+Found identifier: key
+Found operator: =
+Found keyword: false
+Found right brace: }
+Found label separator: ::
+Found identifier: start
+Found label separator: ::
+Found keyword: if
+Found identifier: value
+Found operator: >=
+Found integer: 0
+Found keyword: then
+Found identifier: print
+Found left parenthesis: (
+Found identifier: result
+Found comma: ,
+Found keyword: true
+Found comma: ,
+Found keyword: nil
+Found right parenthesis: )
+Found keyword: end

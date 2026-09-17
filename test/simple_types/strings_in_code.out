@@ -1,0 +1,30 @@
+Found identifier: empty
+Found operator: =
+Found string: 
+Found identifier: english
+Found operator: =
+Found string: Hello world
+Found identifier: russian
+Found operator: =
+Found string: Привет, мир
+Found identifier: quotes
+Found operator: =
+Found string: double: "; single: '
+Found identifier: hexCode
+Found operator: =
+Found string: HI
+Found identifier: decimalCode
+Found operator: =
+Found string: HI
+Found identifier: unicodeCode
+Found operator: =
+Found string: 😀
+Found identifier: longZero
+Found operator: =
+Found long string: Hello world!
+Found identifier: longOne
+Found operator: =
+Found long string: Level one
+Found identifier: longTwo
+Found operator: =
+Found long string: Nested [=[text]=] inside

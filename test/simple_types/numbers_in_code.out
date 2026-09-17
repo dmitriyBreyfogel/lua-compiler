@@ -1,0 +1,23 @@
+Found keyword: local
+Found identifier: integerValue
+Found operator: =
+Found integer: 2
+Found identifier: maxValue
+Found operator: =
+Found integer: 9223372036854775807
+Found identifier: hexValue
+Found operator: =
+Found hexadecimal integer: 42
+Found identifier: negativeValue
+Found operator: =
+Found operator: -
+Found integer: 10000
+Found identifier: decimalFloat
+Found operator: =
+Found float: 2.01
+Found identifier: exponentValue
+Found operator: =
+Found float: 0.4
+Found identifier: hexFloat
+Found operator: =
+Found hexadecimal float: 4

@@ -35,12 +35,18 @@ run_test() {
 
 run_test test/simple_types/numbers
 run_test test/simple_types/strings
+run_test test/simple_types/numbers_in_code
+run_test test/simple_types/strings_in_code
 run_test test/comments/comments
+run_test test/comments/comments_in_code
 run_test test/keywords/keywords
 run_test test/operators/operators
+run_test test/operators/operators_in_code
 run_test test/identifiers/identifiers
 run_test test/errors/invalid_escapes
 run_test test/errors/unterminated_strings
 run_test test/errors/unterminated_long_string
 run_test test/errors/unterminated_multiline_comment
 run_test test/errors/unknown_tokens
+run_test test/complex/mixed_tokens
+run_test test/complex/control_flow

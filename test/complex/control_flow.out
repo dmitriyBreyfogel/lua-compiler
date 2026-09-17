@@ -1,0 +1,29 @@
+Found keyword: function
+Found identifier: process
+Found left parenthesis: (
+Found varargs: ...
+Found right parenthesis: )
+Found keyword: for
+Found identifier: i
+Found operator: =
+Found integer: 1
+Found comma: ,
+Found integer: 3
+Found keyword: do
+Found keyword: if
+Found identifier: i
+Found operator: ~=
+Found integer: 2
+Found keyword: then
+Found identifier: result
+Found operator: =
+Found identifier: result
+Found operator: //
+Found identifier: i
+Found keyword: else
+Found keyword: break
+Found keyword: end
+Found keyword: end
+Found keyword: return
+Found varargs: ...
+Found keyword: end

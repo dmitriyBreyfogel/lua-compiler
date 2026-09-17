@@ -1,0 +1,13 @@
+Found single-line comment: -- Comment on English
+Found single-line comment: -- Комментарий на русском
+Found single-line comment: --Без пробела
+Found keyword: local
+Found identifier: x
+Found operator: =
+Found integer: 5
+Found single-line comment: -- comment after code
+Found keyword: local
+Found multiline comment: comment between tokens
+Found identifier: y
+Found operator: =
+Found integer: 10
