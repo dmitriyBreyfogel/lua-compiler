@@ -11,6 +11,7 @@ compiler="$1"
 actual_output="$(mktemp)"
 generated_output="$(mktemp)"
 generated_input="$(mktemp)"
+test_failures=0
 
 cleanup() {
     rm -f "$actual_output" "$generated_output" "$generated_input"
@@ -29,7 +30,7 @@ compare_output() {
 
     echo "FAIL: $input_file" >&2
     diff -u "$expected_output" "$actual_output" || true
-    exit 1
+    test_failures=$((test_failures + 1))
 }
 
 run_test() {
@@ -119,3 +120,8 @@ run_test test/errors/unterminated_multiline_comment
 run_test test/errors/unknown_tokens
 run_test test/complex/mixed_tokens
 run_test test/complex/control_flow
+
+if [ "$test_failures" -ne 0 ]; then
+    echo "FAILED: $test_failures test(s)" >&2
+    exit 1
+fi
