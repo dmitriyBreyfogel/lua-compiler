@@ -6,6 +6,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         cmake \
         flex \
+        libfl-dev \
         g++ \
         make \
     && rm -rf /var/lib/apt/lists/*
