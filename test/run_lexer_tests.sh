@@ -76,6 +76,20 @@ run_end_of_file_test() {
     run_generated_test "$generated_input"
 }
 
+run_line_ending_test() {
+    printf '%b' 'first\rsecond\r\nthird\n\rfourth\ffifth\vsixth\tseventh' > "$generated_input"
+    printf '%s\n' 'Found identifier: first' 'Found identifier: second' 'Found identifier: third' 'Found identifier: fourth' 'Found identifier: fifth' 'Found identifier: sixth' 'Found identifier: seventh' > "$generated_output"
+    run_generated_test "$generated_input"
+
+    printf '%b' '[[\r\nfirst\rsecond\n\rthird\nfourth]]' > "$generated_input"
+    printf '%b' 'Found long string: first\nsecond\nthird\nfourth\n' > "$generated_output"
+    run_generated_test "$generated_input"
+
+    printf '%b' '"first\\\rsecond"\n"second\\\r\nthird"\n"third\\\n\rfourth"\n"before\\z \t\f\v\r\nafter"' > "$generated_input"
+    printf '%b' 'Found string: first\nsecond\nFound string: second\nthird\nFound string: third\nfourth\nFound string: beforeafter\n' > "$generated_output"
+    run_generated_test "$generated_input"
+}
+
 run_test test/simple_types/numbers
 run_test test/simple_types/number_boundaries
 run_test test/simple_types/strings
@@ -84,6 +98,7 @@ run_test test/simple_types/long_delimiters
 run_control_escape_test
 run_unicode_boundary_test
 run_end_of_file_test
+run_line_ending_test
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
