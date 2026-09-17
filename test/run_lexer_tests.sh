@@ -47,9 +47,15 @@ run_generated_test() {
     compare_output "$input_file" "$generated_output"
 }
 
+run_control_escape_test() {
+    printf '%b' 'Found string: \a\b\f\r\t\v\nFound string: \0000\0377\0001\0014\0173\nFound string: \00012\n' > "$generated_output"
+    run_generated_test test/simple_types/control_escapes.lua
+}
+
 run_test test/simple_types/numbers
 run_test test/simple_types/strings
 run_test test/simple_types/single_quoted_strings
+run_control_escape_test
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
