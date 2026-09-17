@@ -9,19 +9,17 @@ fi
 
 compiler="$1"
 actual_output="$(mktemp)"
+generated_output="$(mktemp)"
 
 cleanup() {
-    rm -f "$actual_output"
+    rm -f "$actual_output" "$generated_output"
 }
 
 trap cleanup EXIT HUP INT TERM
 
-run_test() {
-    test_name="$1"
-    input_file="${test_name}.lua"
-    expected_output="${test_name}.out"
-
-    "$compiler" "$input_file" > "$actual_output"
+compare_output() {
+    input_file="$1"
+    expected_output="$2"
 
     if cmp -s "$expected_output" "$actual_output"; then
         echo "PASS: $input_file"
@@ -31,6 +29,22 @@ run_test() {
     echo "FAIL: $input_file" >&2
     diff -u "$expected_output" "$actual_output" || true
     exit 1
+}
+
+run_test() {
+    test_name="$1"
+    input_file="${test_name}.lua"
+    expected_output="${test_name}.out"
+
+    "$compiler" "$input_file" > "$actual_output"
+    compare_output "$input_file" "$expected_output"
+}
+
+run_generated_test() {
+    input_file="$1"
+
+    "$compiler" "$input_file" > "$actual_output"
+    compare_output "$input_file" "$generated_output"
 }
 
 run_test test/simple_types/numbers
