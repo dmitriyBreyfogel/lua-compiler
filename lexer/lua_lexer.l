@@ -24,6 +24,7 @@
 /* Буферы для составных лексем */
 static std::string stringBuffer;
 static std::string longClose;
+static bool hasStringError;
 
 /* Возвращает числовое значение hex-цифры */
 static int hexDigitValue(char symbol)
@@ -183,16 +184,36 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 
 --[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
 
-\[=*\[ {
+\[=*\[(\r\n|\n\r|\r|\n)? {
     stringBuffer.clear();
     longClose = "]";
-    longClose.append(yyleng - 2, '=');
+    std::size_t equalCount = 0;
+    while (yytext[equalCount + 1] == '=') {
+        ++equalCount;
+    }
+    longClose.append(equalCount, '=');
     longClose.push_back(']');
     BEGIN(LONG_STRING);
 }
 
-<LONG_STRING>[^\]]+ {
+<LONG_STRING>[^\]\r\n]+ {
     stringBuffer.append(yytext, yyleng);
+}
+
+<LONG_STRING>\r\n {
+    stringBuffer.push_back('\n');
+}
+
+<LONG_STRING>\n\r {
+    stringBuffer.push_back('\n');
+}
+
+<LONG_STRING>\r {
+    stringBuffer.push_back('\n');
+}
+
+<LONG_STRING>\n {
+    stringBuffer.push_back('\n');
 }
 
 <LONG_STRING>\]=*\] {
@@ -213,14 +234,14 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     BEGIN(INITIAL);
 }
 
-\"          { stringBuffer.clear(); BEGIN(DOUBLE_QUOTED_STRING); }
-\'          { stringBuffer.clear(); BEGIN(SINGLE_QUOTED_STRING); }
+\"          { stringBuffer.clear(); hasStringError = false; BEGIN(DOUBLE_QUOTED_STRING); }
+\'          { stringBuffer.clear(); hasStringError = false; BEGIN(SINGLE_QUOTED_STRING); }
 
-<DOUBLE_QUOTED_STRING>[^"\\\n]+ {
+<DOUBLE_QUOTED_STRING>[^"\\\r\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
-<SINGLE_QUOTED_STRING>[^'\\\n]+ {
+<SINGLE_QUOTED_STRING>[^'\\\r\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
@@ -274,10 +295,11 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     long value = std::strtol(yytext + 1, nullptr, 10);
 
     if (value > 255) {
-        value = 255;
+        std::cout << "Error: decimal escape too large: " << yytext << "\n";
+        hasStringError = true;
+    } else {
+        stringBuffer.push_back(static_cast<char>(value));
     }
-
-    stringBuffer.push_back(static_cast<char>(value));
 }
 
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]+\} {
@@ -286,6 +308,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 
     if (errno == ERANGE || value >= 0x80000000ULL) {
         std::cout << "Invalid unicode escape: " << yytext << "\n";
+        hasStringError = true;
     } else {
         appendUtf8(value);
     }
@@ -294,17 +317,34 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\z[ \t\r\n\f\v]* {
 }
 
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\r\n {
+    stringBuffer.push_back('\n');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\n\r {
+    stringBuffer.push_back('\n');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\r {
+    stringBuffer.push_back('\n');
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\n {
+    stringBuffer.push_back('\n');
+}
+
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\. {
     std::cout << "Error: invalid string escape: " << yytext << "\n";
+    hasStringError = true;
     stringBuffer.push_back(yytext[1]);
 }
 
-<DOUBLE_QUOTED_STRING>\n {
+<DOUBLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated double-quoted string\n";
     BEGIN(INITIAL);
 }
 
-<SINGLE_QUOTED_STRING>\n {
+<SINGLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated single-quoted string\n";
     BEGIN(INITIAL);
 }
@@ -320,12 +360,16 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 }
 
 <DOUBLE_QUOTED_STRING>\" {
-    std::cout << "Found string: " << stringBuffer << "\n";
+    if (!hasStringError) {
+        std::cout << "Found string: " << stringBuffer << "\n";
+    }
     BEGIN(INITIAL);
 }
 
 <SINGLE_QUOTED_STRING>\' {
-    std::cout << "Found string: " << stringBuffer << "\n";
+    if (!hasStringError) {
+        std::cout << "Found string: " << stringBuffer << "\n";
+    }
     BEGIN(INITIAL);
 }
 
