@@ -220,7 +220,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     stringBuffer.push_back('=');
 }
 
-<COMMENT_LONG_OPEN>"[" {
+<COMMENT_LONG_OPEN>"["(\r\n|\n\r|\r|\n)? {
     longClose = "]";
     longClose.append(stringBuffer.size() - 3, '=');
     longClose.push_back(']');
