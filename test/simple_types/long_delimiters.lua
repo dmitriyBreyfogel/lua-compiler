@@ -1,0 +1,2 @@
+[===[inside ]=[ remains]===]
+[====[inside ]===] remains]====]

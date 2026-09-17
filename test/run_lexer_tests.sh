@@ -61,11 +61,13 @@ run_test test/simple_types/numbers
 run_test test/simple_types/number_boundaries
 run_test test/simple_types/strings
 run_test test/simple_types/single_quoted_strings
+run_test test/simple_types/long_delimiters
 run_control_escape_test
 run_unicode_boundary_test
 run_test test/simple_types/numbers_in_code
 run_test test/simple_types/strings_in_code
 run_test test/comments/comments
+run_test test/comments/long_delimiters
 run_test test/comments/comments_in_code
 run_test test/keywords/keywords
 run_test test/operators/operators
