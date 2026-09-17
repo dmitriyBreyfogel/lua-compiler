@@ -184,6 +184,10 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 
 --[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
 
+\[=+ {
+    std::cout << "Error: invalid long string delimiter: " << yytext << "\n";
+}
+
 \[=*\[(\r\n|\n\r|\r|\n)? {
     stringBuffer.clear();
     longClose = "]";
