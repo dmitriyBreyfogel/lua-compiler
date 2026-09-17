@@ -1,0 +1,8 @@
+Error: invalid hexadecimal escape: \x0
+Error: invalid hexadecimal escape: \xG0
+Error: invalid Unicode escape: \u
+Error: invalid Unicode escape: \u{
+Error: invalid Unicode escape: \u{}
+Error: invalid Unicode escape: \u{G}
+Error: invalid Unicode escape: \u{1
+Error: invalid Unicode escape: \u{80000000}

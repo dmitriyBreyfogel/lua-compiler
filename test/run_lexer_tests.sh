@@ -110,6 +110,7 @@ run_test test/operators/operators_in_code
 run_test test/identifiers/identifiers
 run_test test/identifiers/keyword_boundaries
 run_test test/errors/invalid_escapes
+run_test test/errors/malformed_string_escapes
 run_test test/errors/unterminated_strings
 run_test test/errors/unterminated_long_string
 run_test test/errors/unterminated_multiline_comment
