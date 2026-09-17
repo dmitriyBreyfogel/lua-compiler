@@ -390,6 +390,16 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     stringBuffer.push_back(static_cast<char>((high << 4) | low));
 }
 
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x([0-9A-Fa-f]?[^0-9A-Fa-f"'\r\n][^"'\r\n]*)? {
+    std::cout << "Error: invalid hexadecimal escape: " << yytext << "\n";
+    hasStringError = true;
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x[0-9A-Fa-f]? {
+    std::cout << "Error: invalid hexadecimal escape: " << yytext << "\n";
+    hasStringError = true;
+}
+
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\[0-9]{1,3} {
     long value = std::strtol(yytext + 1, nullptr, 10);
 
@@ -406,11 +416,31 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     unsigned long long value = std::strtoull(yytext + 3, nullptr, 16);
 
     if (errno == ERANGE || value >= 0x80000000ULL) {
-        std::cout << "Invalid unicode escape: " << yytext << "\n";
+        std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
         hasStringError = true;
     } else {
         appendUtf8(value);
     }
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]*[^0-9A-Fa-f}"'\r\n][^"'\r\n]* {
+    std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
+    hasStringError = true;
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]*\} {
+    std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
+    hasStringError = true;
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]* {
+    std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
+    hasStringError = true;
+}
+
+<DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u {
+    std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
+    hasStringError = true;
 }
 
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\z[ \t\r\n\f\v]* {

@@ -2,12 +2,10 @@ Found single-line comment: -- single-line comment
 Found single-line comment: -- однострочный комментарий
 Found single-line comment: --[not a multiline comment
 Found multiline comment: inline multiline comment
-Found multiline comment: 
-multiline comment
+Found multiline comment: multiline comment
 многострочный комментарий
 
-Found multiline comment: 
-comment with equal signs
+Found multiline comment: comment with equal signs
 комментарий со знаками равенства
 
 Found identifier: done
