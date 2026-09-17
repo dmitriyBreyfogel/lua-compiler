@@ -15,6 +15,15 @@
 /* Многострочные комментарии */
 %x MULTILINE_COMMENT
 
+/* Начало комментария */
+%x COMMENT_AFTER_DASHES
+
+/* Проверка разделителя многострочного комментария */
+%x COMMENT_LONG_OPEN
+
+/* Однострочный комментарий */
+%x SINGLE_LINE_COMMENT
+
 %{
 #include <cerrno>
 #include <cstdlib>
@@ -182,12 +191,70 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 {DECIMAL_NUMERAL}     { printNumberToken(yytext); }
 {DOT_DECIMAL_NUMERAL} { printNumberToken(yytext); }
 
---\[=*\[ {
-    stringBuffer.clear();
+"--" {
+    stringBuffer = "--";
+    BEGIN(COMMENT_AFTER_DASHES);
+}
+
+<COMMENT_AFTER_DASHES>"[" {
+    stringBuffer.push_back('[');
+    BEGIN(COMMENT_LONG_OPEN);
+}
+
+<COMMENT_AFTER_DASHES>. {
+    stringBuffer.push_back(yytext[0]);
+    BEGIN(SINGLE_LINE_COMMENT);
+}
+
+<COMMENT_AFTER_DASHES>\r\n|\n\r|\r|\n {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<COMMENT_AFTER_DASHES><<EOF>> {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<COMMENT_LONG_OPEN>"=" {
+    stringBuffer.push_back('=');
+}
+
+<COMMENT_LONG_OPEN>"[" {
     longClose = "]";
-    longClose.append(yyleng - 4, '=');
+    longClose.append(stringBuffer.size() - 3, '=');
     longClose.push_back(']');
+    stringBuffer.clear();
     BEGIN(MULTILINE_COMMENT);
+}
+
+<COMMENT_LONG_OPEN>. {
+    stringBuffer.push_back(yytext[0]);
+    BEGIN(SINGLE_LINE_COMMENT);
+}
+
+<COMMENT_LONG_OPEN>\r\n|\n\r|\r|\n {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<COMMENT_LONG_OPEN><<EOF>> {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_LINE_COMMENT>[^\r\n]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<SINGLE_LINE_COMMENT>\r\n|\n\r|\r|\n {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_LINE_COMMENT><<EOF>> {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
 }
 
 <MULTILINE_COMMENT>[^\]]+ {
@@ -211,8 +278,6 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     std::cout << "Error: unterminated multiline comment before end of file\n";
     BEGIN(INITIAL);
 }
-
---[^\r\n]*  { std::cout << "Found single-line comment: " << yytext << "\n"; }
 
 \[=+ {
     std::cout << "Error: invalid long string delimiter: " << yytext << "\n";
