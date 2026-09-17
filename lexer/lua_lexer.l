@@ -77,6 +77,39 @@ static void appendUtf8(unsigned long long value)
         appendUtf8(0xFFFD);
     }
 }
+
+/* Проверяет и выводит числовую лексему Lua */
+static void printNumberToken(const char* text)
+{
+    char* end = nullptr;
+    double value = std::strtod(text, &end);
+
+    if (*end != '\0') {
+        std::cout << "Error: malformed number: " << text << "\n";
+        return;
+    }
+
+    std::string number(text);
+    bool isHexadecimal = number.size() >= 2
+        && number[0] == '0'
+        && (number[1] == 'x' || number[1] == 'X');
+    bool isFloat = number.find('.') != std::string::npos
+        || (isHexadecimal
+            ? number.find_first_of("pP") != std::string::npos
+            : number.find_first_of("eE") != std::string::npos);
+
+    if (isHexadecimal && !isFloat) {
+        std::cout << "Found hexadecimal integer: "
+                  << std::strtoll(text, nullptr, 16) << "\n";
+    } else if (isHexadecimal) {
+        std::cout << "Found hexadecimal float: " << value << "\n";
+    } else if (isFloat) {
+        std::cout << "Found float: " << value << "\n";
+    } else {
+        std::cout << "Found integer: "
+                  << std::strtoll(text, nullptr, 10) << "\n";
+    }
+}
 %}
 
 /* Макросы */
@@ -84,19 +117,9 @@ NAME_START    [A-Za-z_]
 NAME_SYMBOL   [A-Za-z0-9_]
 WHITESPACES   [ \t\r\n\f\v]+
 
-DECIMAL_DIGIT          [0-9]
-HEXADECIMAL_DIGIT      [0-9A-Fa-f]
-
-DECIMAL_EXPONENT       [eE][+-]?{DECIMAL_DIGIT}+
-DECIMAL_INTEGER        {DECIMAL_DIGIT}+
-DECIMAL_FRACTION       (({DECIMAL_DIGIT}+\.{DECIMAL_DIGIT}*)|(\.{DECIMAL_DIGIT}+))
-DECIMAL_FLOAT          ({DECIMAL_FRACTION}{DECIMAL_EXPONENT}?|{DECIMAL_DIGIT}+{DECIMAL_EXPONENT})
-
-HEXADECIMAL_PREFIX     0[xX]
-HEXADECIMAL_INTEGER    {HEXADECIMAL_PREFIX}{HEXADECIMAL_DIGIT}+
-HEXADECIMAL_EXPONENT   [pP][+-]?{DECIMAL_DIGIT}+
-HEXADECIMAL_FRACTION   (({HEXADECIMAL_DIGIT}+\.{HEXADECIMAL_DIGIT}*)|(\.{HEXADECIMAL_DIGIT}+))
-HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_EXPONENT}?|{HEXADECIMAL_INTEGER}{HEXADECIMAL_EXPONENT})
+HEX_NUMERAL          0[xX]([0-9A-Fa-f.]|[pP][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
+DECIMAL_NUMERAL      [0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
+DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 
 %%
 
@@ -124,21 +147,9 @@ HEXADECIMAL_FLOAT      ({HEXADECIMAL_PREFIX}{HEXADECIMAL_FRACTION}{HEXADECIMAL_E
 "until"     { std::cout << "Found keyword: " << yytext << "\n"; }
 "while"     { std::cout << "Found keyword: " << yytext << "\n"; }
 
-{HEXADECIMAL_FLOAT} {
-    std::cout << "Found hexadecimal float: " << std::strtod(yytext, nullptr) << "\n";
-}
-
-{HEXADECIMAL_INTEGER} {
-    std::cout << "Found hexadecimal integer: " << std::strtoll(yytext, nullptr, 16) << "\n";
-}
-
-{DECIMAL_FLOAT} {
-    std::cout << "Found float: " << std::strtod(yytext, nullptr) << "\n";
-}
-
-{DECIMAL_INTEGER} {
-    std::cout << "Found integer: " << std::strtoll(yytext, nullptr, 10) << "\n";
-}
+{HEX_NUMERAL}         { printNumberToken(yytext); }
+{DECIMAL_NUMERAL}     { printNumberToken(yytext); }
+{DOT_DECIMAL_NUMERAL} { printNumberToken(yytext); }
 
 --\[=*\[ {
     stringBuffer.clear();
