@@ -112,22 +112,21 @@ static void printNumberToken(const char* text)
     }
 
     std::string number(text);
-    bool isHexadecimal = number.size() >= 2
-        && number[0] == '0'
-        && (number[1] == 'x' || number[1] == 'X');
-    bool isFloat = number.find('.') != std::string::npos
-        || (isHexadecimal
-            ? number.find_first_of("pP") != std::string::npos
-            : number.find_first_of("eE") != std::string::npos);
+    bool isHexadecimal = number.size() >= 2 && number[0] == '0' && (number[1] == 'x' || number[1] == 'X');
+    bool isFloat = number.find('.') != std::string::npos || (isHexadecimal
+                    ? number.find_first_of("pP") != std::string::npos
+                    : number.find_first_of("eE") != std::string::npos);
 
     if (isHexadecimal && !isFloat) {
-        std::cout << "Found hexadecimal integer: "
-                  << parseHexadecimalInteger(text) << "\n";
-    } else if (isHexadecimal) {
+        std::cout << "Found hexadecimal integer: " << parseHexadecimalInteger(text) << "\n";
+    } 
+    else if (isHexadecimal) {
         std::cout << "Found hexadecimal float: " << value << "\n";
-    } else if (isFloat) {
+    } 
+    else if (isFloat) {
         std::cout << "Found float: " << value << "\n";
-    } else {
+    } 
+    else {
         errno = 0;
         long long integer = std::strtoll(text, nullptr, 10);
 
@@ -136,8 +135,7 @@ static void printNumberToken(const char* text)
             return;
         }
 
-        std::cout << "Found integer: "
-                  << integer << "\n";
+        std::cout << "Found integer: " << integer << "\n";
     }
 }
 %}
@@ -177,6 +175,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "true"      { std::cout << "Found keyword: " << yytext << "\n"; }
 "until"     { std::cout << "Found keyword: " << yytext << "\n"; }
 "while"     { std::cout << "Found keyword: " << yytext << "\n"; }
+
  /* Шестнадцатеричный числовой литерал */
 {HEX_NUMERAL}         { printNumberToken(yytext); }
 
@@ -301,9 +300,11 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     stringBuffer.clear();
     longClose = "]";
     std::size_t equalCount = 0;
+
     while (yytext[equalCount + 1] == '=') {
         ++equalCount;
     }
+
     longClose.append(equalCount, '=');
     longClose.push_back(']');
     BEGIN(LONG_STRING);
@@ -339,7 +340,8 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     if (longClose == std::string(yytext, yyleng)) {
         std::cout << "Found long string: " << stringBuffer << "\n";
         BEGIN(INITIAL);
-    } else {
+    } 
+    else {
         stringBuffer.append(yytext, yyleng);
     }
 }
@@ -594,6 +596,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 ":"         { std::cout << "Found colon: " << yytext << "\n"; }
 ","         { std::cout << "Found comma: " << yytext << "\n"; }
 "."         { std::cout << "Found dot: " << yytext << "\n"; }
+
  /* Идентификатор */
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
