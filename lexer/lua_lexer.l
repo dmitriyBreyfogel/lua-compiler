@@ -28,7 +28,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iostream>
-#include <limits>
 #include <string>
 
 /* Буферы для составных лексем */
@@ -63,16 +62,7 @@ static long long parseHexadecimalInteger(const char* text)
         value = value * 16 + static_cast<unsigned long long>(hexDigitValue(*character));
     }
 
-    const unsigned long long maximumInteger =
-        static_cast<unsigned long long>(std::numeric_limits<long long>::max());
-
-    if (value <= maximumInteger) {
-        return static_cast<long long>(value);
-    }
-
-    const unsigned long long maximumUnsignedInteger =
-        std::numeric_limits<unsigned long long>::max();
-    return -1 - static_cast<long long>(maximumUnsignedInteger - value);
+    return static_cast<long long>(value);
 }
 
 /* Добавляет кодовую точку Unicode в строковый буфер */
