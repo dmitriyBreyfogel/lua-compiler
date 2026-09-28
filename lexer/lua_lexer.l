@@ -15,12 +15,6 @@
 /* Многострочные комментарии */
 %x MULTILINE_COMMENT
 
-/* Начало комментария */
-%x COMMENT_AFTER_DASHES
-
-/* Проверка разделителя многострочного комментария */
-%x COMMENT_LONG_OPEN
-
 /* Однострочный комментарий */
 %x SINGLE_LINE_COMMENT
 
@@ -29,11 +23,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-
-/* Буферы для составных лексем */
-static std::string stringBuffer;
-static std::string longClose;
-static bool hasStringError;
 
 /* Возвращает числовое значение шестнадцатеричной цифры */
 static int hexDigitValue(char symbol)
@@ -53,7 +42,7 @@ static int hexDigitValue(char symbol)
     return -1;
 }
 
-/* Преобразует шестнадцатеричное число в целое число Lua с оборачиванием */
+/* Преобразует шестнадцатеричное число в целое число с учетом переполнения */
 static long long parseHexadecimalInteger(const char* text)
 {
     unsigned long long value = 0;
@@ -66,7 +55,7 @@ static long long parseHexadecimalInteger(const char* text)
 }
 
 /* Добавляет кодовую точку Unicode в строковый буфер */
-static void appendUtf8(unsigned long long value)
+static void appendUtf8(unsigned long long value, std::string& stringBuffer)
 {
     if (value <= 0x7F) {
         stringBuffer.push_back(static_cast<char>(value));
@@ -96,7 +85,7 @@ static void appendUtf8(unsigned long long value)
         stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
         stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
     } else {
-        appendUtf8(0xFFFD);
+        appendUtf8(0xFFFD, stringBuffer);
     }
 }
 
@@ -145,11 +134,20 @@ NAME_START    [A-Za-z_]
 NAME_SYMBOL   [A-Za-z0-9_]
 WHITESPACES   [ \t\r\n\f\v]+
 
-HEX_NUMERAL          0[xX]([0-9A-Fa-f.]|[pP][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
+
+/* Корректный шестнадцатеричный числовой литерал */
+HEX_NUMERAL          0[xX]([0-9A-Fa-f]+(\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)([pP][+-]?[0-9]+)?
+/* Последовательность, похожая на шестнадцатеричный литерал, но с неверным форматом */
+INVALID_HEX_NUMERAL  0[xX]([0-9A-Fa-f.]|[pP][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 DECIMAL_NUMERAL      [0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 
 %%
+
+    /* Состояние одного запуска yylex */
+    std::string stringBuffer;
+    std::string longClose;
+    bool hasStringError = false;
 
  /* Ключевые слова */
 "and"       { std::cout << "Found keyword: " << yytext << "\n"; }
@@ -179,72 +177,36 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
  /* Шестнадцатеричный числовой литерал */
 {HEX_NUMERAL}         { printNumberToken(yytext); }
 
+ /* Некорректный шестнадцатеричный числовой литерал */
+{INVALID_HEX_NUMERAL} {
+    std::cout << "Error: malformed number: " << yytext << "\n";
+}
+
  /* Десятичный числовой литерал */
 {DECIMAL_NUMERAL}     { printNumberToken(yytext); }
 
  /* Десятичный литерал, начинающийся с точки */
 {DOT_DECIMAL_NUMERAL} { printNumberToken(yytext); }
 
- /* Начало комментария */
-"--" {
-    stringBuffer = "--";
-    BEGIN(COMMENT_AFTER_DASHES);
-}
+ /* Открытие многострочного комментария */
+"--"\[=*\[(\r\n|\n\r|\r|\n)? {
+    size_t equalsCount = 0;
 
- /* Открывающая скобка после -- */
-<COMMENT_AFTER_DASHES>"[" {
-    stringBuffer.push_back('[');
-    BEGIN(COMMENT_LONG_OPEN);
-}
+    for (size_t index = 3; yytext[index] == '='; ++index) {
+        ++equalsCount;
+    }
 
- /* Первый символ однострочного комментария */
-<COMMENT_AFTER_DASHES>. {
-    stringBuffer.push_back(yytext[0]);
-    BEGIN(SINGLE_LINE_COMMENT);
-}
-
- /* Пустой комментарий до перевода строки */
-<COMMENT_AFTER_DASHES>\r\n|\n\r|\r|\n {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
-}
-
- /* Пустой комментарий до конца файла */
-<COMMENT_AFTER_DASHES><<EOF>> {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
-}
-
- /* Знак уровня многострочного комментария */
-<COMMENT_LONG_OPEN>"=" {
-    stringBuffer.push_back('=');
-}
-
- /* Завершение открытия многострочного комментария */
-<COMMENT_LONG_OPEN>"["(\r\n|\n\r|\r|\n)? {
     longClose = "]";
-    longClose.append(stringBuffer.size() - 3, '=');
+    longClose.append(equalsCount, '=');
     longClose.push_back(']');
     stringBuffer.clear();
     BEGIN(MULTILINE_COMMENT);
 }
 
- /* Некорректное открытие, переход к однострочному комментарию */
-<COMMENT_LONG_OPEN>. {
-    stringBuffer.push_back(yytext[0]);
+ /* Открытие однострочного комментария */
+"--" {
+    stringBuffer = "--";
     BEGIN(SINGLE_LINE_COMMENT);
-}
-
- /* Незавершённое открытие до перевода строки */
-<COMMENT_LONG_OPEN>\r\n|\n\r|\r|\n {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
-}
-
- /* Незавершённое открытие до конца файла */
-<COMMENT_LONG_OPEN><<EOF>> {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
 }
 
  /* Текст однострочного комментария */
@@ -463,7 +425,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
         std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
         hasStringError = true;
     } else {
-        appendUtf8(value);
+        appendUtf8(value, stringBuffer);
     }
 }
 
