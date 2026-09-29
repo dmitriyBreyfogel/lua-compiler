@@ -20,9 +20,12 @@
 
 %{
 #include <cerrno>
+#include <cstring>
 #include <cstdlib>
 #include <iostream>
 #include <string>
+
+#include "lua_parser.hpp"
 
 /* Возвращает числовое значение шестнадцатеричной цифры */
 static int hexDigitValue(char symbol)
@@ -90,14 +93,14 @@ static void appendUtf8(unsigned long long value, std::string& stringBuffer)
 }
 
 /* Проверяет и выводит числовую лексему Lua */
-static void printNumberToken(const char* text)
+static int printNumberToken(const char* text)
 {
     char* end = nullptr;
     double value = std::strtod(text, &end);
 
     if (*end != '\0') {
         std::cout << "Error: malformed number: " << text << "\n";
-        return;
+        return TOKEN_ERROR;
     }
 
     std::string number(text);
@@ -107,25 +110,46 @@ static void printNumberToken(const char* text)
                     : number.find_first_of("eE") != std::string::npos);
 
     if (isHexadecimal && !isFloat) {
-        std::cout << "Found hexadecimal integer: " << parseHexadecimalInteger(text) << "\n";
+        yylval.integerValue = parseHexadecimalInteger(text);
+        std::cout << "Found hexadecimal integer: " << yylval.integerValue << "\n";
+        return TOKEN_HEX_INTEGER;
     } 
     else if (isHexadecimal) {
+        yylval.floatValue = value;
         std::cout << "Found hexadecimal float: " << value << "\n";
+        return TOKEN_HEX_FLOAT;
     } 
     else if (isFloat) {
+        yylval.floatValue = value;
         std::cout << "Found float: " << value << "\n";
+        return TOKEN_FLOAT;
     } 
     else {
         errno = 0;
         long long integer = std::strtoll(text, nullptr, 10);
 
         if (errno == ERANGE) {
+            yylval.floatValue = value;
             std::cout << "Found float: " << value << "\n";
-            return;
+            return TOKEN_FLOAT;
         }
 
+        yylval.integerValue = integer;
         std::cout << "Found integer: " << integer << "\n";
+        return TOKEN_INTEGER;
     }
+}
+
+static char* copyTokenText(const std::string& text)
+{
+    char* copy = static_cast<char*>(std::malloc(text.size() + 1));
+
+    if (copy == nullptr) {
+        std::abort();
+    }
+
+    std::memcpy(copy, text.c_str(), text.size() + 1);
+    return copy;
 }
 %}
 
@@ -150,43 +174,44 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     bool hasStringError = false;
 
  /* Ключевые слова */
-"and"       { std::cout << "Found keyword: " << yytext << "\n"; }
-"break"     { std::cout << "Found keyword: " << yytext << "\n"; }
-"do"        { std::cout << "Found keyword: " << yytext << "\n"; }
-"else"      { std::cout << "Found keyword: " << yytext << "\n"; }
-"elseif"    { std::cout << "Found keyword: " << yytext << "\n"; }
-"end"       { std::cout << "Found keyword: " << yytext << "\n"; }
-"false"     { std::cout << "Found keyword: " << yytext << "\n"; }
-"for"       { std::cout << "Found keyword: " << yytext << "\n"; }
-"function"  { std::cout << "Found keyword: " << yytext << "\n"; }
-"global"    { std::cout << "Found keyword: " << yytext << "\n"; }
-"goto"      { std::cout << "Found keyword: " << yytext << "\n"; }
-"if"        { std::cout << "Found keyword: " << yytext << "\n"; }
-"in"        { std::cout << "Found keyword: " << yytext << "\n"; }
-"local"     { std::cout << "Found keyword: " << yytext << "\n"; }
-"nil"       { std::cout << "Found keyword: " << yytext << "\n"; }
-"not"       { std::cout << "Found keyword: " << yytext << "\n"; }
-"or"        { std::cout << "Found keyword: " << yytext << "\n"; }
-"repeat"    { std::cout << "Found keyword: " << yytext << "\n"; }
-"return"    { std::cout << "Found keyword: " << yytext << "\n"; }
-"then"      { std::cout << "Found keyword: " << yytext << "\n"; }
-"true"      { std::cout << "Found keyword: " << yytext << "\n"; }
-"until"     { std::cout << "Found keyword: " << yytext << "\n"; }
-"while"     { std::cout << "Found keyword: " << yytext << "\n"; }
+"and"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_AND; }
+"break"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_BREAK; }
+"do"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_DO; }
+"else"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_ELSE; }
+"elseif"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_ELSEIF; }
+"end"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_END; }
+"false"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FALSE; }
+"for"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FOR; }
+"function"  { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FUNCTION; }
+"global"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_GLOBAL; }
+"goto"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_GOTO; }
+"if"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_IF; }
+"in"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_IN; }
+"local"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_LOCAL; }
+"nil"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_NIL; }
+"not"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_NOT; }
+"or"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_OR; }
+"repeat"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_REPEAT; }
+"return"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_RETURN; }
+"then"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_THEN; }
+"true"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_TRUE; }
+"until"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_UNTIL; }
+"while"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_WHILE; }
 
  /* Шестнадцатеричный числовой литерал */
-{HEX_NUMERAL}         { printNumberToken(yytext); }
+{HEX_NUMERAL}         { return printNumberToken(yytext); }
 
  /* Некорректный шестнадцатеричный числовой литерал */
 {INVALID_HEX_NUMERAL} {
     std::cout << "Error: malformed number: " << yytext << "\n";
+    return TOKEN_ERROR;
 }
 
  /* Десятичный числовой литерал */
-{DECIMAL_NUMERAL}     { printNumberToken(yytext); }
+{DECIMAL_NUMERAL}     { return printNumberToken(yytext); }
 
  /* Десятичный литерал, начинающийся с точки */
-{DOT_DECIMAL_NUMERAL} { printNumberToken(yytext); }
+{DOT_DECIMAL_NUMERAL} { return printNumberToken(yytext); }
 
  /* Открытие многострочного комментария */
 "--"\[=*\[(\r\n|\n\r|\r|\n)? {
@@ -250,11 +275,13 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <MULTILINE_COMMENT><<EOF>> {
     std::cout << "Error: unterminated multiline comment before end of file\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Некорректный разделитель длинной строки */
 \[=+ {
     std::cout << "Error: invalid long string delimiter: " << yytext << "\n";
+    return TOKEN_ERROR;
 }
 
  /* Открывающий разделитель длинной строки */
@@ -302,6 +329,8 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     if (longClose == std::string(yytext, yyleng)) {
         std::cout << "Found long string: " << stringBuffer << "\n";
         BEGIN(INITIAL);
+        yylval.textValue = copyTokenText(stringBuffer);
+        return TOKEN_STRING;
     } 
     else {
         stringBuffer.append(yytext, yyleng);
@@ -317,6 +346,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <LONG_STRING><<EOF>> {
     std::cout << "Error: unterminated long string before end of file\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Открытие строки в двойных кавычках */
@@ -488,86 +518,103 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <DOUBLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated double-quoted string\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Незакрытая строка в одинарных кавычках */
 <SINGLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated single-quoted string\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Незакрытая строка в двойных кавычках до конца файла */
 <DOUBLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated double-quoted string before end of file\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Незакрытая строка в одинарных кавычках до конца файла */
 <SINGLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated single-quoted string before end of file\n";
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Закрытие строки в двойных кавычках */
 <DOUBLE_QUOTED_STRING>\" {
     if (!hasStringError) {
         std::cout << "Found string: " << stringBuffer << "\n";
+        BEGIN(INITIAL);
+        yylval.textValue = copyTokenText(stringBuffer);
+        return TOKEN_STRING;
     }
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Закрытие строки в одинарных кавычках */
 <SINGLE_QUOTED_STRING>\' {
     if (!hasStringError) {
         std::cout << "Found string: " << stringBuffer << "\n";
+        BEGIN(INITIAL);
+        yylval.textValue = copyTokenText(stringBuffer);
+        return TOKEN_STRING;
     }
     BEGIN(INITIAL);
+    return TOKEN_ERROR;
 }
 
  /* Операторы и разделители */
-"..."       { std::cout << "Found varargs: " << yytext << "\n"; }
-".."        { std::cout << "Found operator: " << yytext << "\n"; }
-"//"        { std::cout << "Found operator: " << yytext << "\n"; }
-"<<"        { std::cout << "Found operator: " << yytext << "\n"; }
-">>"        { std::cout << "Found operator: " << yytext << "\n"; }
-"=="        { std::cout << "Found operator: " << yytext << "\n"; }
-"~="        { std::cout << "Found operator: " << yytext << "\n"; }
-"<="        { std::cout << "Found operator: " << yytext << "\n"; }
-">="        { std::cout << "Found operator: " << yytext << "\n"; }
-"::"        { std::cout << "Found label separator: " << yytext << "\n"; }
-"+"         { std::cout << "Found operator: " << yytext << "\n"; }
-"-"         { std::cout << "Found operator: " << yytext << "\n"; }
-"*"         { std::cout << "Found operator: " << yytext << "\n"; }
-"/"         { std::cout << "Found operator: " << yytext << "\n"; }
-"%"         { std::cout << "Found operator: " << yytext << "\n"; }
-"^"         { std::cout << "Found operator: " << yytext << "\n"; }
-"#"         { std::cout << "Found operator: " << yytext << "\n"; }
-"&"         { std::cout << "Found operator: " << yytext << "\n"; }
-"~"         { std::cout << "Found operator: " << yytext << "\n"; }
-"|"         { std::cout << "Found operator: " << yytext << "\n"; }
-"="         { std::cout << "Found operator: " << yytext << "\n"; }
-"<"         { std::cout << "Found operator: " << yytext << "\n"; }
-">"         { std::cout << "Found operator: " << yytext << "\n"; }
-"("         { std::cout << "Found left parenthesis: " << yytext << "\n"; }
-")"         { std::cout << "Found right parenthesis: " << yytext << "\n"; }
-"["         { std::cout << "Found left bracket: " << yytext << "\n"; }
-"]"         { std::cout << "Found right bracket: " << yytext << "\n"; }
-"{"         { std::cout << "Found left brace: " << yytext << "\n"; }
-"}"         { std::cout << "Found right brace: " << yytext << "\n"; }
-";"         { std::cout << "Found semicolon: " << yytext << "\n"; }
-":"         { std::cout << "Found colon: " << yytext << "\n"; }
-","         { std::cout << "Found comma: " << yytext << "\n"; }
-"."         { std::cout << "Found dot: " << yytext << "\n"; }
+"..."       { std::cout << "Found varargs: " << yytext << "\n"; return TOKEN_VARARG; }
+".."        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_CONCAT; }
+"//"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_INT_DIV; }
+"<<"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_SHIFT_LEFT; }
+">>"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_SHIFT_RIGHT; }
+"=="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_EQUAL; }
+"~="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_NOT_EQUAL; }
+"<="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_LESS_EQUAL; }
+">="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_GREATER_EQUAL; }
+"::"        { std::cout << "Found label separator: " << yytext << "\n"; return TOKEN_LABEL; }
+"+"         { std::cout << "Found operator: " << yytext << "\n"; return '+'; }
+"-"         { std::cout << "Found operator: " << yytext << "\n"; return '-'; }
+"*"         { std::cout << "Found operator: " << yytext << "\n"; return '*'; }
+"/"         { std::cout << "Found operator: " << yytext << "\n"; return '/'; }
+"%"         { std::cout << "Found operator: " << yytext << "\n"; return '%'; }
+"^"         { std::cout << "Found operator: " << yytext << "\n"; return '^'; }
+"#"         { std::cout << "Found operator: " << yytext << "\n"; return '#'; }
+"&"         { std::cout << "Found operator: " << yytext << "\n"; return '&'; }
+"~"         { std::cout << "Found operator: " << yytext << "\n"; return '~'; }
+"|"         { std::cout << "Found operator: " << yytext << "\n"; return '|'; }
+"="         { std::cout << "Found operator: " << yytext << "\n"; return '='; }
+"<"         { std::cout << "Found operator: " << yytext << "\n"; return '<'; }
+">"         { std::cout << "Found operator: " << yytext << "\n"; return '>'; }
+"("         { std::cout << "Found left parenthesis: " << yytext << "\n"; return '('; }
+")"         { std::cout << "Found right parenthesis: " << yytext << "\n"; return ')'; }
+"["         { std::cout << "Found left bracket: " << yytext << "\n"; return '['; }
+"]"         { std::cout << "Found right bracket: " << yytext << "\n"; return ']'; }
+"{"         { std::cout << "Found left brace: " << yytext << "\n"; return '{'; }
+"}"         { std::cout << "Found right brace: " << yytext << "\n"; return '}'; }
+";"         { std::cout << "Found semicolon: " << yytext << "\n"; return ';'; }
+":"         { std::cout << "Found colon: " << yytext << "\n"; return ':'; }
+","         { std::cout << "Found comma: " << yytext << "\n"; return ','; }
+"."         { std::cout << "Found dot: " << yytext << "\n"; return '.'; }
 
  /* Идентификатор */
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
+    yylval.textValue = copyTokenText(yytext);
+    return TOKEN_IDENTIFIER;
 }
 
  /* Игнорируемые пробельные символы */
 {WHITESPACES}    ;
 
  /* Неизвестный символ */
-.|\n        { std::cout << "Error: unknown token: " << yytext << "\n"; }
+.|\n        {
+    std::cout << "Error: unknown token: " << yytext << "\n";
+    return TOKEN_ERROR;
+}
 
 %%
