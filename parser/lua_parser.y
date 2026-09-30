@@ -49,11 +49,20 @@ void yyerror(const char* message)
 %%
 
 chunk:
-    st_list
+    block
+;
+
+block:
+    st_list_em finish_st
+;
+
+st_list_em:
+    %empty
+|   st_list
 ;
 
 st_list:
-    %empty
+    st
 |   st_list st
 ;
 
@@ -62,7 +71,15 @@ st:
 |   TOKEN_LOCAL name_list
 |   TOKEN_LOCAL name_list '=' expr_list
 |   variable_list '=' expr_list
+;
+
+finish_st:
+    %empty
+|   TOKEN_BREAK
+|   TOKEN_RETURN
+|   TOKEN_RETURN ';'
 |   TOKEN_RETURN expr_list
+|   TOKEN_RETURN expr_list ';'
 ;
 
 name_list:
@@ -71,8 +88,19 @@ name_list:
 ;
 
 variable_list:
+    variable
+|   variable_list ',' variable
+;
+
+variable:
     TOKEN_IDENTIFIER
-|   variable_list ',' TOKEN_IDENTIFIER
+|   prefix_expr '[' expr ']'
+|   prefix_expr '.' TOKEN_IDENTIFIER
+;
+
+prefix_expr:
+    variable
+|   '(' expr ')'
 ;
 
 expr_list:
@@ -89,8 +117,7 @@ expr:
 |   TOKEN_TRUE
 |   TOKEN_FALSE
 |   TOKEN_NIL
-|   TOKEN_IDENTIFIER
-|   '(' expr ')'
+|   prefix_expr
 |   expr '+' expr
 |   expr '-' expr
 |   expr '*' expr
