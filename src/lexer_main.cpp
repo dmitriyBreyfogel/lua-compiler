@@ -1,22 +1,11 @@
 #include <fstream>
 #include <iostream>
-#include <streambuf>
 
 #include <FlexLexer.h>
-#include "lua_parser.hpp"
 
 namespace {
 
 yyFlexLexer* activeLexer = nullptr;
-
-class NullBuffer final : public std::streambuf
-{
-protected:
-    int overflow(int character) override
-    {
-        return character;
-    }
-};
 
 }
 
@@ -41,14 +30,8 @@ int main(int argc, char* argv[])
     yyFlexLexer lexer(&input, &std::cout);
     activeLexer = &lexer;
 
-    NullBuffer nullBuffer;
-    std::streambuf* originalOutput = std::cout.rdbuf(&nullBuffer);
-    int parseStatus = yyparse();
-    std::cout.rdbuf(originalOutput);
-
-    if (parseStatus == 0) {
-        std::cout << "Syntax is correct\n";
+    while (lexer.yylex() != 0) {
     }
 
-    return parseStatus;
+    return 0;
 }
