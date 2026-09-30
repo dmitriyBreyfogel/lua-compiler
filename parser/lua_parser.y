@@ -31,25 +31,38 @@ void yyerror(const char* message)
 %token TOKEN_EQUAL TOKEN_NOT_EQUAL TOKEN_LESS_EQUAL TOKEN_GREATER_EQUAL TOKEN_LABEL
 %token TOKEN_ERROR
 
+%left TOKEN_OR
+%left TOKEN_AND
+%nonassoc '<' '>' TOKEN_LESS_EQUAL TOKEN_GREATER_EQUAL TOKEN_EQUAL TOKEN_NOT_EQUAL
+%left '|'
+%left '~'
+%left '&'
+%left TOKEN_SHIFT_LEFT TOKEN_SHIFT_RIGHT
+%right TOKEN_CONCAT
+%left '+' '-'
+%left '*' '/' TOKEN_INT_DIV '%'
+%precedence TOKEN_UNARY
+%right '^'
+
 %start chunk
 
 %%
 
 chunk:
-    statement_list
+    st_list
 ;
 
-statement_list:
+st_list:
     %empty
-|   statement_list statement
+|   st_list st
 ;
 
-statement:
+st:
     ';'
 |   TOKEN_LOCAL name_list
-|   TOKEN_LOCAL name_list '=' expression_list
-|   variable_list '=' expression_list
-|   TOKEN_RETURN expression_list
+|   TOKEN_LOCAL name_list '=' expr_list
+|   variable_list '=' expr_list
+|   TOKEN_RETURN expr_list
 ;
 
 name_list:
@@ -62,12 +75,12 @@ variable_list:
 |   variable_list ',' TOKEN_IDENTIFIER
 ;
 
-expression_list:
-    expression
-|   expression_list ',' expression
+expr_list:
+    expr
+|   expr_list ',' expr
 ;
 
-expression:
+expr:
     TOKEN_INTEGER
 |   TOKEN_HEX_INTEGER
 |   TOKEN_FLOAT
@@ -77,7 +90,32 @@ expression:
 |   TOKEN_FALSE
 |   TOKEN_NIL
 |   TOKEN_IDENTIFIER
-|   '(' expression ')'
+|   '(' expr ')'
+|   expr '+' expr
+|   expr '-' expr
+|   expr '*' expr
+|   expr '/' expr
+|   expr TOKEN_INT_DIV expr
+|   expr '%' expr
+|   expr '^' expr
+|   expr TOKEN_CONCAT expr
+|   expr '<' expr
+|   expr '>' expr
+|   expr TOKEN_LESS_EQUAL expr
+|   expr TOKEN_GREATER_EQUAL expr
+|   expr TOKEN_EQUAL expr
+|   expr TOKEN_NOT_EQUAL expr
+|   expr '&' expr
+|   expr '~' expr
+|   expr '|' expr
+|   expr TOKEN_SHIFT_LEFT expr
+|   expr TOKEN_SHIFT_RIGHT expr
+|   expr TOKEN_AND expr
+|   expr TOKEN_OR expr
+|   '-' expr %prec TOKEN_UNARY
+|   TOKEN_NOT expr %prec TOKEN_UNARY
+|   '#' expr %prec TOKEN_UNARY
+|   '~' expr %prec TOKEN_UNARY
 ;
 
 %%
