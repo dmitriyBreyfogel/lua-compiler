@@ -10,6 +10,8 @@ void yyerror(const char* message)
 %}
 
 %define parse.error detailed
+%define parse.lac full
+%define lr.type ielr
 %union {
     long long integerValue;
     double floatValue;

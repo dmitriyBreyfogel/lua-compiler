@@ -15,19 +15,29 @@ find_program(BISON_EXECUTABLE bison REQUIRED)
 set(GENERATED_LEXER_FILE "${CMAKE_CURRENT_BINARY_DIR}/lua_lexer.cpp")
 set(GENERATED_PARSER_FILE "${CMAKE_CURRENT_BINARY_DIR}/lua_parser.cpp")
 set(GENERATED_PARSER_HEADER "${CMAKE_CURRENT_BINARY_DIR}/lua_parser.hpp")
+set(PARSER_REPORT_FILE "${CMAKE_CURRENT_BINARY_DIR}/lua_parser.output")
 
 add_custom_command(
-    OUTPUT "${GENERATED_PARSER_FILE}" "${GENERATED_PARSER_HEADER}"
+    OUTPUT
+        "${GENERATED_PARSER_FILE}"
+        "${GENERATED_PARSER_HEADER}"
+        "${PARSER_REPORT_FILE}"
     COMMAND "${BISON_EXECUTABLE}"
         "--defines=${GENERATED_PARSER_HEADER}"
         "--output=${GENERATED_PARSER_FILE}"
+        "--report=state"
+        "--report-file=${PARSER_REPORT_FILE}"
+        "-Werror=conflicts-sr,error=conflicts-rr"
         "${CMAKE_CURRENT_SOURCE_DIR}/parser/lua_parser.y"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/parser/lua_parser.y"
     VERBATIM
 )
 
 add_custom_target(generate_parser ALL
-    DEPENDS "${GENERATED_PARSER_FILE}" "${GENERATED_PARSER_HEADER}"
+    DEPENDS
+        "${GENERATED_PARSER_FILE}"
+        "${GENERATED_PARSER_HEADER}"
+        "${PARSER_REPORT_FILE}"
 )
 
 add_custom_command(
