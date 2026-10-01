@@ -1,0 +1,4 @@
+Error: malformed number: 1e
+Error: malformed number: 1e+
+Error: malformed number: 1.2.3
+Error: malformed number: 123hello

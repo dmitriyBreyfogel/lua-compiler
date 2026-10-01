@@ -139,17 +139,19 @@ WHITESPACES   [ \t\r\n\f\v]+
 HEX_NUMERAL          0[xX]([0-9A-Fa-f]+(\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)([pP][+-]?[0-9]+)?
 /* Последовательность, похожая на шестнадцатеричный литерал, но с неверным форматом */
 INVALID_HEX_NUMERAL  0[xX]([0-9A-Fa-f.]|[pP][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
-DECIMAL_NUMERAL      [0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
-DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
+DECIMAL_MANTISSA         ([0-9]+\.[0-9]*|[0-9]+|\.[0-9]+)
+DECIMAL_EXPONENT         [eE][+-]?[0-9]+
+DECIMAL_NUMERAL          {DECIMAL_MANTISSA}({DECIMAL_EXPONENT})?
+INVALID_DECIMAL_NUMERAL  ({DECIMAL_MANTISSA}{DECIMAL_EXPONENT}[A-Za-z_][A-Za-z0-9_]*|{DECIMAL_MANTISSA}[A-DF-Za-df-z_][A-Za-z0-9_]*|{DECIMAL_MANTISSA}[eE][+-]?([A-Za-z_][A-Za-z0-9_]*)?|[0-9]+\.[0-9]+\.[0-9][0-9A-Za-z_.]*)
 
 %%
 
-    /* Состояние одного запуска yylex */
+    /* -------- Локальное состояние одного запуска yylex -------- */
     std::string stringBuffer;
     std::string longClose;
     bool hasStringError = false;
 
- /* Ключевые слова */
+ /* ------------------------------ Ключевые слова ------------------------------ */
 "and"       { std::cout << "Found keyword: " << yytext << "\n"; }
 "break"     { std::cout << "Found keyword: " << yytext << "\n"; }
 "do"        { std::cout << "Found keyword: " << yytext << "\n"; }
@@ -174,6 +176,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "until"     { std::cout << "Found keyword: " << yytext << "\n"; }
 "while"     { std::cout << "Found keyword: " << yytext << "\n"; }
 
+ /* ---------------------------- Числовые литералы ---------------------------- */
  /* Шестнадцатеричный числовой литерал */
 {HEX_NUMERAL}         { printNumberToken(yytext); }
 
@@ -182,13 +185,21 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     std::cout << "Error: malformed number: " << yytext << "\n";
 }
 
+ /* Десятичное целое перед оператором конкатенации */
+[0-9]+/\.\. {
+    printNumberToken(yytext);
+}
+
+ /* Некорректный десятичный числовой литерал */
+{INVALID_DECIMAL_NUMERAL} {
+    std::cout << "Error: malformed number: " << yytext << "\n";
+}
+
  /* Десятичный числовой литерал */
 {DECIMAL_NUMERAL}     { printNumberToken(yytext); }
 
- /* Десятичный литерал, начинающийся с точки */
-{DOT_DECIMAL_NUMERAL} { printNumberToken(yytext); }
-
- /* Открытие многострочного комментария */
+ /* -------------------------------- Комментарии -------------------------------- */
+ /* ----- Многострочный комментарий: открытие, текст и закрытие ----- */
 "--"\[=*\[(\r\n|\n\r|\r|\n)? {
     size_t equalsCount = 0;
 
@@ -203,35 +214,10 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     BEGIN(MULTILINE_COMMENT);
 }
 
- /* Открытие однострочного комментария */
-"--" {
-    stringBuffer = "--";
-    BEGIN(SINGLE_LINE_COMMENT);
-}
-
- /* Текст однострочного комментария */
-<SINGLE_LINE_COMMENT>[^\r\n]+ {
-    stringBuffer.append(yytext, yyleng);
-}
-
- /* Завершение однострочного комментария переводом строки */
-<SINGLE_LINE_COMMENT>\r\n|\n\r|\r|\n {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
-}
-
- /* Завершение однострочного комментария концом файла */
-<SINGLE_LINE_COMMENT><<EOF>> {
-    std::cout << "Found single-line comment: " << stringBuffer << "\n";
-    BEGIN(INITIAL);
-}
-
- /* Текст многострочного комментария без закрывающей скобки */
 <MULTILINE_COMMENT>[^\]]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
- /* Возможный закрывающий разделитель многострочного комментария */
 <MULTILINE_COMMENT>\]=*\] {
     if (longClose == std::string(yytext, yyleng)) {
         std::cout << "Found multiline comment: " << stringBuffer << "\n";
@@ -241,18 +227,37 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     }
 }
 
- /* Одиночная закрывающая скобка в многострочном комментарии */
 <MULTILINE_COMMENT>\] {
     stringBuffer.push_back(']');
 }
 
- /* Незакрытый многострочный комментарий */
 <MULTILINE_COMMENT><<EOF>> {
     std::cout << "Error: unterminated multiline comment before end of file\n";
     BEGIN(INITIAL);
 }
 
- /* Некорректный разделитель длинной строки */
+ /* ----- Однострочный комментарий: открытие, текст и закрытие ----- */
+"--" {
+    stringBuffer = "--";
+    BEGIN(SINGLE_LINE_COMMENT);
+}
+
+<SINGLE_LINE_COMMENT>[^\r\n]+ {
+    stringBuffer.append(yytext, yyleng);
+}
+
+<SINGLE_LINE_COMMENT>\r\n|\n\r|\r|\n {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+<SINGLE_LINE_COMMENT><<EOF>> {
+    std::cout << "Found single-line comment: " << stringBuffer << "\n";
+    BEGIN(INITIAL);
+}
+
+ /* ------------------------------ Длинные строки ------------------------------ */
+ /* ----- Некорректный и открывающий разделители ----- */
 \[=+ {
     std::cout << "Error: invalid long string delimiter: " << yytext << "\n";
 }
@@ -272,7 +277,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     BEGIN(LONG_STRING);
 }
 
- /* Текст длинной строки без закрывающей скобки */
+ /* ----- Содержимое строки и нормализация переводов строк ----- */
 <LONG_STRING>[^\]\r\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
@@ -297,7 +302,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     stringBuffer.push_back('\n');
 }
 
- /* Возможный закрывающий разделитель длинной строки */
+ /* ----- Закрытие строки или сообщение об ошибке ----- */
 <LONG_STRING>\]=*\] {
     if (longClose == std::string(yytext, yyleng)) {
         std::cout << "Found long string: " << stringBuffer << "\n";
@@ -308,97 +313,82 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     }
 }
 
- /* Одиночная закрывающая скобка в длинной строке */
 <LONG_STRING>\] {
     stringBuffer.push_back(']');
 }
 
- /* Незакрытая длинная строка */
 <LONG_STRING><<EOF>> {
     std::cout << "Error: unterminated long string before end of file\n";
     BEGIN(INITIAL);
 }
 
- /* Открытие строки в двойных кавычках */
+ /* ----------------------------- Короткие строки ----------------------------- */
+ /* ----- Открытие строки и обычный текст ----- */
 \"          { stringBuffer.clear(); hasStringError = false; BEGIN(DOUBLE_QUOTED_STRING); }
 
- /* Открытие строки в одинарных кавычках */
 \'          { stringBuffer.clear(); hasStringError = false; BEGIN(SINGLE_QUOTED_STRING); }
 
- /* Обычный текст строки в двойных кавычках */
 <DOUBLE_QUOTED_STRING>[^"\\\r\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
- /* Обычный текст строки в одинарных кавычках */
 <SINGLE_QUOTED_STRING>[^'\\\r\n]+ {
     stringBuffer.append(yytext, yyleng);
 }
 
- /* Escape-последовательность звукового сигнала */
+ /* ----- Простые escape-последовательности ----- */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\a {
     stringBuffer.push_back('\a');
 }
 
- /* Escape-последовательность удаления предыдущего символа */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\b {
     stringBuffer.push_back('\b');
 }
 
- /* Escape-последовательность перевода страницы */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\f {
     stringBuffer.push_back('\f');
 }
 
- /* Escape-последовательность перевода строки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\n {
     stringBuffer.push_back('\n');
 }
 
- /* Escape-последовательность возврата каретки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\r {
     stringBuffer.push_back('\r');
 }
 
- /* Escape-последовательность горизонтальной табуляции */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\t {
     stringBuffer.push_back('\t');
 }
 
- /* Escape-последовательность вертикальной табуляции */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\v {
     stringBuffer.push_back('\v');
 }
 
- /* Экранированная обратная косая черта */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\\ {
     stringBuffer.push_back('\\');
 }
 
- /* Экранированная двойная кавычка */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\" {
     stringBuffer.push_back('"');
 }
 
- /* Экранированная одинарная кавычка */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\' {
     stringBuffer.push_back('\'');
 }
 
- /* Корректная шестнадцатеричная escape-последовательность */
+ /* ----- Шестнадцатеричные и десятичные escape-последовательности ----- */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x[0-9A-Fa-f]{2} {
     int high = hexDigitValue(yytext[2]);
     int low = hexDigitValue(yytext[3]);
     stringBuffer.push_back(static_cast<char>((high << 4) | low));
 }
 
- /* Шестнадцатеричная escape-последовательность с неверным символом */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x([0-9A-Fa-f]?[^0-9A-Fa-f"'\r\n][^"'\r\n]*)? {
     std::cout << "Error: invalid hexadecimal escape: " << yytext << "\n";
     hasStringError = true;
 }
 
- /* Неполная шестнадцатеричная escape-последовательность */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\x[0-9A-Fa-f]? {
     std::cout << "Error: invalid hexadecimal escape: " << yytext << "\n";
     hasStringError = true;
@@ -416,7 +406,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     }
 }
 
- /* Корректная Unicode escape-последовательность */
+ /* ----- Unicode escape-последовательности ----- */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]+\} {
     errno = 0;
     unsigned long long value = std::strtoull(yytext + 3, nullptr, 16);
@@ -429,86 +419,73 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     }
 }
 
- /* Unicode escape-последовательность с неверным символом */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]*[^0-9A-Fa-f}"'\r\n][^"'\r\n]* {
     std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
     hasStringError = true;
 }
 
- /* Unicode escape-последовательность без шестнадцатеричных цифр */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]*\} {
     std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
     hasStringError = true;
 }
 
- /* Unicode escape-последовательность без закрывающей скобки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u\{[0-9A-Fa-f]* {
     std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
     hasStringError = true;
 }
 
- /* Unicode escape-последовательность без открывающей скобки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\u {
     std::cout << "Error: invalid Unicode escape: " << yytext << "\n";
     hasStringError = true;
 }
 
- /* Escape-последовательность для пропуска пробелов */
+ /* ----- Пропуск пробелов и экранированные переводы строк ----- */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\z[ \t\r\n\f\v]* {
 }
 
- /* Экранированные возврат каретки и перевод строки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\r\n {
     stringBuffer.push_back('\n');
 }
 
- /* Экранированные перевод строки и возврат каретки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\n\r {
     stringBuffer.push_back('\n');
 }
 
- /* Экранированный возврат каретки внутри строки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\r {
     stringBuffer.push_back('\n');
 }
 
- /* Экранированный перевод строки внутри строки */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\\n {
     stringBuffer.push_back('\n');
 }
 
- /* Неизвестная escape-последовательность */
+ /* ----- Ошибочные escape-последовательности и завершение строки ----- */
 <DOUBLE_QUOTED_STRING,SINGLE_QUOTED_STRING>\\. {
     std::cout << "Error: invalid string escape: " << yytext << "\n";
     hasStringError = true;
     stringBuffer.push_back(yytext[1]);
 }
 
- /* Незакрытая строка в двойных кавычках */
 <DOUBLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated double-quoted string\n";
     BEGIN(INITIAL);
 }
 
- /* Незакрытая строка в одинарных кавычках */
 <SINGLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated single-quoted string\n";
     BEGIN(INITIAL);
 }
 
- /* Незакрытая строка в двойных кавычках до конца файла */
 <DOUBLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated double-quoted string before end of file\n";
     BEGIN(INITIAL);
 }
 
- /* Незакрытая строка в одинарных кавычках до конца файла */
 <SINGLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated single-quoted string before end of file\n";
     BEGIN(INITIAL);
 }
 
- /* Закрытие строки в двойных кавычках */
 <DOUBLE_QUOTED_STRING>\" {
     if (!hasStringError) {
         std::cout << "Found string: " << stringBuffer << "\n";
@@ -516,7 +493,6 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     BEGIN(INITIAL);
 }
 
- /* Закрытие строки в одинарных кавычках */
 <SINGLE_QUOTED_STRING>\' {
     if (!hasStringError) {
         std::cout << "Found string: " << stringBuffer << "\n";
@@ -524,7 +500,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     BEGIN(INITIAL);
 }
 
- /* Операторы и разделители */
+ /* ------------ Составные операторы и служебные последовательности ------------ */
 "..."       { std::cout << "Found varargs: " << yytext << "\n"; }
 ".."        { std::cout << "Found operator: " << yytext << "\n"; }
 "//"        { std::cout << "Found operator: " << yytext << "\n"; }
@@ -535,6 +511,8 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "<="        { std::cout << "Found operator: " << yytext << "\n"; }
 ">="        { std::cout << "Found operator: " << yytext << "\n"; }
 "::"        { std::cout << "Found label separator: " << yytext << "\n"; }
+
+ /* ------------------------- Односимвольные операторы ------------------------- */
 "+"         { std::cout << "Found operator: " << yytext << "\n"; }
 "-"         { std::cout << "Found operator: " << yytext << "\n"; }
 "*"         { std::cout << "Found operator: " << yytext << "\n"; }
@@ -548,6 +526,8 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "="         { std::cout << "Found operator: " << yytext << "\n"; }
 "<"         { std::cout << "Found operator: " << yytext << "\n"; }
 ">"         { std::cout << "Found operator: " << yytext << "\n"; }
+
+ /* -------------------------------- Разделители -------------------------------- */
 "("         { std::cout << "Found left parenthesis: " << yytext << "\n"; }
 ")"         { std::cout << "Found right parenthesis: " << yytext << "\n"; }
 "["         { std::cout << "Found left bracket: " << yytext << "\n"; }
@@ -559,15 +539,15 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 ","         { std::cout << "Found comma: " << yytext << "\n"; }
 "."         { std::cout << "Found dot: " << yytext << "\n"; }
 
- /* Идентификатор */
+ /* ------------------------------ Идентификаторы ------------------------------ */
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
 }
 
- /* Игнорируемые пробельные символы */
+ /* ---------------------------- Пробельные символы ---------------------------- */
 {WHITESPACES}    ;
 
- /* Неизвестный символ */
+ /* ---------------------------- Неизвестные символы ---------------------------- */
 .|\n        { std::cout << "Error: unknown token: " << yytext << "\n"; }
 
 %%
