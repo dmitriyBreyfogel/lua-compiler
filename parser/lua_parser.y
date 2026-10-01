@@ -71,6 +71,7 @@ st:
 |   TOKEN_LOCAL name_list
 |   TOKEN_LOCAL name_list '=' expr_list
 |   variable_list '=' expr_list
+|   function_call
 ;
 
 finish_st:
@@ -100,12 +101,27 @@ variable:
 
 prefix_expr:
     variable
+|   function_call
 |   '(' expr ')'
+;
+
+function_call:
+    prefix_expr args
+|   prefix_expr ':' TOKEN_IDENTIFIER args
+;
+
+args:
+    '(' expr_list_em ')'
 ;
 
 expr_list:
     expr
 |   expr_list ',' expr
+;
+
+expr_list_em:
+    %empty
+|   expr_list
 ;
 
 expr:
