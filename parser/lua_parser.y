@@ -79,6 +79,7 @@ st:
 |   TOKEN_REPEAT block TOKEN_UNTIL expr
 |   TOKEN_FOR TOKEN_IDENTIFIER '=' expr ',' expr TOKEN_DO block TOKEN_END
 |   TOKEN_FOR TOKEN_IDENTIFIER '=' expr ',' expr ',' expr TOKEN_DO block TOKEN_END
+|   TOKEN_FOR name_list TOKEN_IN expr_list TOKEN_DO block TOKEN_END
 ;
 
 if_st:
