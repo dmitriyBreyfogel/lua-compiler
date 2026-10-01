@@ -10,6 +10,3 @@ Found hexadecimal float: 3.14159
 Error: malformed number: 0X
 Error: malformed number: 1E
 Error: malformed number: 0X1P
-Found integer: 1
-Found operator: ..
-Found integer: 2

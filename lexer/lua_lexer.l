@@ -39,6 +39,7 @@ static int hexDigitValue(char symbol)
         return 10 + symbol - 'A';
     }
 
+    /* Не шестнадцатеричная цифра */
     return -1;
 }
 
@@ -47,7 +48,9 @@ static long long parseHexadecimalInteger(const char* text)
 {
     unsigned long long value = 0;
 
+    /* Пропускаем префикс 0x */
     for (const char* character = text + 2; *character != '\0'; ++character) {
+        /* Накапливаем значение по цифрам */
         value = value * 16 + static_cast<unsigned long long>(hexDigitValue(*character));
     }
 
@@ -57,6 +60,7 @@ static long long parseHexadecimalInteger(const char* text)
 /* Добавляет кодовую точку Unicode в строковый буфер */
 static void appendUtf8(unsigned long long value, std::string& stringBuffer)
 {
+    /* Длина последовательности зависит от значения кодовой точки */
     if (value <= 0x7F) {
         stringBuffer.push_back(static_cast<char>(value));
     } else if (value <= 0x7FF) {
@@ -84,14 +88,13 @@ static void appendUtf8(unsigned long long value, std::string& stringBuffer)
         stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 12) & 0x3F)));
         stringBuffer.push_back(static_cast<char>(0x80 | ((value >> 6) & 0x3F)));
         stringBuffer.push_back(static_cast<char>(0x80 | (value & 0x3F)));
-    } else {
-        appendUtf8(0xFFFD, stringBuffer);
     }
 }
 
 /* Проверяет и выводит числовую лексему Lua */
 static void printNumberToken(const char* text)
 {
+    /* Проверяем, что вся последовательность является числом. */
     char* end = nullptr;
     double value = std::strtod(text, &end);
 
@@ -100,6 +103,7 @@ static void printNumberToken(const char* text)
         return;
     }
 
+    /* Определяем основание и наличие дробной части или экспоненты. */
     std::string number(text);
     bool isHexadecimal = number.size() >= 2 && number[0] == '0' && (number[1] == 'x' || number[1] == 'X');
     bool isFloat = number.find('.') != std::string::npos || (isHexadecimal
@@ -107,6 +111,7 @@ static void printNumberToken(const char* text)
                     : number.find_first_of("eE") != std::string::npos);
 
     if (isHexadecimal && !isFloat) {
+        /* Шестнадцатеричное целое число */
         std::cout << "Found hexadecimal integer: " << parseHexadecimalInteger(text) << "\n";
     } 
     else if (isHexadecimal) {
@@ -116,6 +121,7 @@ static void printNumberToken(const char* text)
         std::cout << "Found float: " << value << "\n";
     } 
     else {
+        /* Переполненное десятичное целое выводим как float. */
         errno = 0;
         long long integer = std::strtoll(text, nullptr, 10);
 
@@ -135,14 +141,8 @@ NAME_SYMBOL   [A-Za-z0-9_]
 WHITESPACES   [ \t\r\n\f\v]+
 
 
-/* Корректный шестнадцатеричный числовой литерал */
-HEX_NUMERAL          0[xX]([0-9A-Fa-f]+(\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)([pP][+-]?[0-9]+)?
-/* Последовательность, похожая на шестнадцатеричный литерал, но с неверным форматом */
-INVALID_HEX_NUMERAL  0[xX]([0-9A-Fa-f.]|[pP][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
-DECIMAL_MANTISSA         ([0-9]+\.[0-9]*|[0-9]+|\.[0-9]+)
-DECIMAL_EXPONENT         [eE][+-]?[0-9]+
-DECIMAL_NUMERAL          {DECIMAL_MANTISSA}({DECIMAL_EXPONENT})?
-INVALID_DECIMAL_NUMERAL  ({DECIMAL_MANTISSA}{DECIMAL_EXPONENT}[A-Za-z_][A-Za-z0-9_]*|{DECIMAL_MANTISSA}[A-DF-Za-df-z_][A-Za-z0-9_]*|{DECIMAL_MANTISSA}[eE][+-]?([A-Za-z_][A-Za-z0-9_]*)?|[0-9]+\.[0-9]+\.[0-9][0-9A-Za-z_.]*)
+/* Общий кандидат на число */
+NUMERAL  (0[xX]([0-9A-Fa-f.]|[pP][+-]?)*|([0-9]|\.[0-9])([0-9A-Fa-f.]|[eE][+-]?)*)([A-Za-z_][A-Za-z0-9_]*)?
 
 %%
 
@@ -177,26 +177,8 @@ INVALID_DECIMAL_NUMERAL  ({DECIMAL_MANTISSA}{DECIMAL_EXPONENT}[A-Za-z_][A-Za-z0-
 "while"     { std::cout << "Found keyword: " << yytext << "\n"; }
 
  /* ---------------------------- Числовые литералы ---------------------------- */
- /* Шестнадцатеричный числовой литерал */
-{HEX_NUMERAL}         { printNumberToken(yytext); }
-
- /* Некорректный шестнадцатеричный числовой литерал */
-{INVALID_HEX_NUMERAL} {
-    std::cout << "Error: malformed number: " << yytext << "\n";
-}
-
- /* Десятичное целое перед оператором конкатенации */
-[0-9]+/\.\. {
-    printNumberToken(yytext);
-}
-
- /* Некорректный десятичный числовой литерал */
-{INVALID_DECIMAL_NUMERAL} {
-    std::cout << "Error: malformed number: " << yytext << "\n";
-}
-
- /* Десятичный числовой литерал */
-{DECIMAL_NUMERAL}     { printNumberToken(yytext); }
+ /* Тип и корректность числа определяет printNumberToken. */
+{NUMERAL} { printNumberToken(yytext); }
 
  /* -------------------------------- Комментарии -------------------------------- */
  /* ----- Многострочный комментарий: открытие, текст и закрытие ----- */

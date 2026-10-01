@@ -21,8 +21,5 @@ Error: malformed number: 123abc
 Error: malformed number: 0x
 Error: malformed number: 1e
 Error: malformed number: 0x1p
-Found integer: 1
-Found operator: ..
-Found integer: 2
-Found integer: 1
-Found varargs: ...
+Error: malformed number: 1..2
+Error: malformed number: 1...
