@@ -18,30 +18,33 @@ void yyerror(const char* message)
     char* textValue;
 }
 
-%token <integerValue> TOKEN_INTEGER TOKEN_HEX_INTEGER
-%token <floatValue> TOKEN_FLOAT TOKEN_HEX_FLOAT
-%token <textValue> TOKEN_IDENTIFIER TOKEN_STRING
+%token <integerValue> INT HEX_INT
+%token <floatValue> FLOAT HEX_FLOAT
+%token <textValue> ID STRING
 
-%token TOKEN_AND TOKEN_BREAK TOKEN_DO TOKEN_ELSE TOKEN_ELSEIF TOKEN_END
-%token TOKEN_FALSE TOKEN_FOR TOKEN_FUNCTION TOKEN_GLOBAL TOKEN_GOTO TOKEN_IF
-%token TOKEN_IN TOKEN_LOCAL TOKEN_NIL TOKEN_NOT TOKEN_OR TOKEN_REPEAT
-%token TOKEN_RETURN TOKEN_THEN TOKEN_TRUE TOKEN_UNTIL TOKEN_WHILE
+%token TRUE FALSE NIL
+%token IF THEN ELSEIF ELSE END
+%token WHILE REPEAT UNTIL FOR IN DO BREAK
+%token FUNCTION RETURN
+%token LOCAL GLOBAL
+%token GOTO LABEL_SEP
+%token AND OR NOT
+%token VARARG
+%token CONCAT INT_DIV LSHIFT RSHIFT
+%token EQ NE LE GE
+%token INVALID
 
-%token TOKEN_VARARG TOKEN_CONCAT TOKEN_INT_DIV TOKEN_SHIFT_LEFT TOKEN_SHIFT_RIGHT
-%token TOKEN_EQUAL TOKEN_NOT_EQUAL TOKEN_LESS_EQUAL TOKEN_GREATER_EQUAL TOKEN_LABEL
-%token TOKEN_ERROR
-
-%left TOKEN_OR
-%left TOKEN_AND
-%nonassoc '<' '>' TOKEN_LESS_EQUAL TOKEN_GREATER_EQUAL TOKEN_EQUAL TOKEN_NOT_EQUAL
+%left OR
+%left AND
+%nonassoc '<' '>' LE GE EQ NE
 %left '|'
 %left '~'
 %left '&'
-%left TOKEN_SHIFT_LEFT TOKEN_SHIFT_RIGHT
-%right TOKEN_CONCAT
+%left LSHIFT RSHIFT
+%right CONCAT
 %left '+' '-'
-%left '*' '/' TOKEN_INT_DIV '%'
-%precedence TOKEN_UNARY
+%left '*' '/' INT_DIV '%'
+%precedence UNARY
 %right '^'
 
 %start chunk
@@ -68,26 +71,26 @@ st_list:
 
 st:
     ';'
-|   TOKEN_BREAK
-|   TOKEN_LOCAL name_list
-|   TOKEN_LOCAL name_list '=' expr_list
-|   TOKEN_FUNCTION func_name '(' par_list_em ')' block TOKEN_END
-|   TOKEN_LOCAL TOKEN_FUNCTION TOKEN_IDENTIFIER '(' par_list_em ')' block TOKEN_END
+|   BREAK
+|   LOCAL name_list
+|   LOCAL name_list '=' expr_list
+|   FUNCTION func_name '(' par_list_em ')' block END
+|   LOCAL FUNCTION ID '(' par_list_em ')' block END
 |   variable_list '=' expr_list
 |   function_call
 |   if_st
-|   TOKEN_WHILE expr TOKEN_DO block TOKEN_END
-|   TOKEN_REPEAT block TOKEN_UNTIL expr
-|   TOKEN_FOR TOKEN_IDENTIFIER '=' expr ',' expr TOKEN_DO block TOKEN_END
-|   TOKEN_FOR TOKEN_IDENTIFIER '=' expr ',' expr ',' expr TOKEN_DO block TOKEN_END
-|   TOKEN_FOR name_list TOKEN_IN expr_list TOKEN_DO block TOKEN_END
+|   WHILE expr DO block END
+|   REPEAT block UNTIL expr
+|   FOR ID '=' expr ',' expr DO block END
+|   FOR ID '=' expr ',' expr ',' expr DO block END
+|   FOR name_list IN expr_list DO block END
 ;
 
 if_st:
-    TOKEN_IF expr TOKEN_THEN block TOKEN_END
-|   TOKEN_IF expr TOKEN_THEN block TOKEN_ELSE block TOKEN_END
-|   TOKEN_IF expr TOKEN_THEN block elseif_st_list TOKEN_END
-|   TOKEN_IF expr TOKEN_THEN block elseif_st_list TOKEN_ELSE block TOKEN_END
+    IF expr THEN block END
+|   IF expr THEN block ELSE block END
+|   IF expr THEN block elseif_st_list END
+|   IF expr THEN block elseif_st_list ELSE block END
 ;
 
 elseif_st_list:
@@ -96,30 +99,30 @@ elseif_st_list:
 ;
 
 elseif_st:
-    TOKEN_ELSEIF expr TOKEN_THEN block
+    ELSEIF expr THEN block
 ;
 
 func_name:
     dotted_name
-|   dotted_name ':' TOKEN_IDENTIFIER
+|   dotted_name ':' ID
 ;
 
 dotted_name:
-    TOKEN_IDENTIFIER
-|   dotted_name '.' TOKEN_IDENTIFIER
+    ID
+|   dotted_name '.' ID
 ;
 
 finish_st:
     %empty
-|   TOKEN_RETURN
-|   TOKEN_RETURN ';'
-|   TOKEN_RETURN expr_list
-|   TOKEN_RETURN expr_list ';'
+|   RETURN
+|   RETURN ';'
+|   RETURN expr_list
+|   RETURN expr_list ';'
 ;
 
 name_list:
-    TOKEN_IDENTIFIER
-|   name_list ',' TOKEN_IDENTIFIER
+    ID
+|   name_list ',' ID
 ;
 
 variable_list:
@@ -128,11 +131,11 @@ variable_list:
 ;
 
 variable:
-    TOKEN_IDENTIFIER
+    ID
 |   variable '[' expr ']'
-|   variable '.' TOKEN_IDENTIFIER
+|   variable '.' ID
 |   function_call '[' expr ']'
-|   function_call '.' TOKEN_IDENTIFIER
+|   function_call '.' ID
 ;
 
 prefix_expr:
@@ -143,14 +146,14 @@ prefix_expr:
 
 function_call:
     variable args
-|   variable ':' TOKEN_IDENTIFIER args
+|   variable ':' ID args
 |   function_call args
-|   function_call ':' TOKEN_IDENTIFIER args
+|   function_call ':' ID args
 ;
 
 args:
     '(' expr_list_em ')'
-|   TOKEN_STRING
+|   STRING
 |   table_constructor
 ;
 
@@ -171,8 +174,8 @@ par_list_em:
 
 par_list:
     name_list
-|   name_list ',' TOKEN_VARARG
-|   TOKEN_VARARG
+|   name_list ',' VARARG
+|   VARARG
 ;
 
 table_constructor:
@@ -192,7 +195,7 @@ field_list:
 
 field:
     '[' expr ']' '=' expr
-|   TOKEN_IDENTIFIER '=' expr
+|   ID '=' expr
 |   expr
 ;
 
@@ -202,43 +205,43 @@ field_sep:
 ;
 
 expr:
-    TOKEN_INTEGER
-|   TOKEN_HEX_INTEGER
-|   TOKEN_FLOAT
-|   TOKEN_HEX_FLOAT
-|   TOKEN_STRING
-|   TOKEN_TRUE
-|   TOKEN_FALSE
-|   TOKEN_NIL
-|   TOKEN_VARARG
+    INT
+|   HEX_INT
+|   FLOAT
+|   HEX_FLOAT
+|   STRING
+|   TRUE
+|   FALSE
+|   NIL
+|   VARARG
 |   prefix_expr
 |   table_constructor
-|   TOKEN_FUNCTION '(' par_list_em ')' block TOKEN_END
+|   FUNCTION '(' par_list_em ')' block END
 |   expr '+' expr
 |   expr '-' expr
 |   expr '*' expr
 |   expr '/' expr
-|   expr TOKEN_INT_DIV expr
+|   expr INT_DIV expr
 |   expr '%' expr
 |   expr '^' expr
-|   expr TOKEN_CONCAT expr
+|   expr CONCAT expr
 |   expr '<' expr
 |   expr '>' expr
-|   expr TOKEN_LESS_EQUAL expr
-|   expr TOKEN_GREATER_EQUAL expr
-|   expr TOKEN_EQUAL expr
-|   expr TOKEN_NOT_EQUAL expr
+|   expr LE expr
+|   expr GE expr
+|   expr EQ expr
+|   expr NE expr
 |   expr '&' expr
 |   expr '~' expr
 |   expr '|' expr
-|   expr TOKEN_SHIFT_LEFT expr
-|   expr TOKEN_SHIFT_RIGHT expr
-|   expr TOKEN_AND expr
-|   expr TOKEN_OR expr
-|   '-' expr %prec TOKEN_UNARY
-|   TOKEN_NOT expr %prec TOKEN_UNARY
-|   '#' expr %prec TOKEN_UNARY
-|   '~' expr %prec TOKEN_UNARY
+|   expr LSHIFT expr
+|   expr RSHIFT expr
+|   expr AND expr
+|   expr OR expr
+|   '-' expr %prec UNARY
+|   NOT expr %prec UNARY
+|   '#' expr %prec UNARY
+|   '~' expr %prec UNARY
 ;
 
 %%

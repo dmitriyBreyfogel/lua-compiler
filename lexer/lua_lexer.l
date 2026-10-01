@@ -100,7 +100,7 @@ static int printNumberToken(const char* text)
 
     if (*end != '\0') {
         std::cout << "Error: malformed number: " << text << "\n";
-        return TOKEN_ERROR;
+        return INVALID;
     }
 
     std::string number(text);
@@ -112,17 +112,17 @@ static int printNumberToken(const char* text)
     if (isHexadecimal && !isFloat) {
         yylval.integerValue = parseHexadecimalInteger(text);
         std::cout << "Found hexadecimal integer: " << yylval.integerValue << "\n";
-        return TOKEN_HEX_INTEGER;
+        return HEX_INT;
     } 
     else if (isHexadecimal) {
         yylval.floatValue = value;
         std::cout << "Found hexadecimal float: " << value << "\n";
-        return TOKEN_HEX_FLOAT;
+        return HEX_FLOAT;
     } 
     else if (isFloat) {
         yylval.floatValue = value;
         std::cout << "Found float: " << value << "\n";
-        return TOKEN_FLOAT;
+        return FLOAT;
     } 
     else {
         errno = 0;
@@ -131,12 +131,12 @@ static int printNumberToken(const char* text)
         if (errno == ERANGE) {
             yylval.floatValue = value;
             std::cout << "Found float: " << value << "\n";
-            return TOKEN_FLOAT;
+            return FLOAT;
         }
 
         yylval.integerValue = integer;
         std::cout << "Found integer: " << integer << "\n";
-        return TOKEN_INTEGER;
+        return INT;
     }
 }
 
@@ -174,29 +174,29 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
     bool hasStringError = false;
 
  /* Ключевые слова */
-"and"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_AND; }
-"break"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_BREAK; }
-"do"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_DO; }
-"else"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_ELSE; }
-"elseif"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_ELSEIF; }
-"end"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_END; }
-"false"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FALSE; }
-"for"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FOR; }
-"function"  { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_FUNCTION; }
-"global"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_GLOBAL; }
-"goto"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_GOTO; }
-"if"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_IF; }
-"in"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_IN; }
-"local"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_LOCAL; }
-"nil"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_NIL; }
-"not"       { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_NOT; }
-"or"        { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_OR; }
-"repeat"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_REPEAT; }
-"return"    { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_RETURN; }
-"then"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_THEN; }
-"true"      { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_TRUE; }
-"until"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_UNTIL; }
-"while"     { std::cout << "Found keyword: " << yytext << "\n"; return TOKEN_WHILE; }
+"and"       { std::cout << "Found keyword: " << yytext << "\n"; return AND; }
+"break"     { std::cout << "Found keyword: " << yytext << "\n"; return BREAK; }
+"do"        { std::cout << "Found keyword: " << yytext << "\n"; return DO; }
+"else"      { std::cout << "Found keyword: " << yytext << "\n"; return ELSE; }
+"elseif"    { std::cout << "Found keyword: " << yytext << "\n"; return ELSEIF; }
+"end"       { std::cout << "Found keyword: " << yytext << "\n"; return END; }
+"false"     { std::cout << "Found keyword: " << yytext << "\n"; return FALSE; }
+"for"       { std::cout << "Found keyword: " << yytext << "\n"; return FOR; }
+"function"  { std::cout << "Found keyword: " << yytext << "\n"; return FUNCTION; }
+"global"    { std::cout << "Found keyword: " << yytext << "\n"; return GLOBAL; }
+"goto"      { std::cout << "Found keyword: " << yytext << "\n"; return GOTO; }
+"if"        { std::cout << "Found keyword: " << yytext << "\n"; return IF; }
+"in"        { std::cout << "Found keyword: " << yytext << "\n"; return IN; }
+"local"     { std::cout << "Found keyword: " << yytext << "\n"; return LOCAL; }
+"nil"       { std::cout << "Found keyword: " << yytext << "\n"; return NIL; }
+"not"       { std::cout << "Found keyword: " << yytext << "\n"; return NOT; }
+"or"        { std::cout << "Found keyword: " << yytext << "\n"; return OR; }
+"repeat"    { std::cout << "Found keyword: " << yytext << "\n"; return REPEAT; }
+"return"    { std::cout << "Found keyword: " << yytext << "\n"; return RETURN; }
+"then"      { std::cout << "Found keyword: " << yytext << "\n"; return THEN; }
+"true"      { std::cout << "Found keyword: " << yytext << "\n"; return TRUE; }
+"until"     { std::cout << "Found keyword: " << yytext << "\n"; return UNTIL; }
+"while"     { std::cout << "Found keyword: " << yytext << "\n"; return WHILE; }
 
  /* Шестнадцатеричный числовой литерал */
 {HEX_NUMERAL}         { return printNumberToken(yytext); }
@@ -204,7 +204,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
  /* Некорректный шестнадцатеричный числовой литерал */
 {INVALID_HEX_NUMERAL} {
     std::cout << "Error: malformed number: " << yytext << "\n";
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Десятичный числовой литерал */
@@ -275,13 +275,13 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <MULTILINE_COMMENT><<EOF>> {
     std::cout << "Error: unterminated multiline comment before end of file\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Некорректный разделитель длинной строки */
 \[=+ {
     std::cout << "Error: invalid long string delimiter: " << yytext << "\n";
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Открывающий разделитель длинной строки */
@@ -330,7 +330,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
         std::cout << "Found long string: " << stringBuffer << "\n";
         BEGIN(INITIAL);
         yylval.textValue = copyTokenText(stringBuffer);
-        return TOKEN_STRING;
+        return STRING;
     } 
     else {
         stringBuffer.append(yytext, yyleng);
@@ -346,7 +346,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <LONG_STRING><<EOF>> {
     std::cout << "Error: unterminated long string before end of file\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Открытие строки в двойных кавычках */
@@ -518,28 +518,28 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 <DOUBLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated double-quoted string\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Незакрытая строка в одинарных кавычках */
 <SINGLE_QUOTED_STRING>\r\n|\n\r|\r|\n {
     std::cout << "Error: unterminated single-quoted string\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Незакрытая строка в двойных кавычках до конца файла */
 <DOUBLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated double-quoted string before end of file\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Незакрытая строка в одинарных кавычках до конца файла */
 <SINGLE_QUOTED_STRING><<EOF>> {
     std::cout << "Error: unterminated single-quoted string before end of file\n";
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Закрытие строки в двойных кавычках */
@@ -548,10 +548,10 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
         std::cout << "Found string: " << stringBuffer << "\n";
         BEGIN(INITIAL);
         yylval.textValue = copyTokenText(stringBuffer);
-        return TOKEN_STRING;
+        return STRING;
     }
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Закрытие строки в одинарных кавычках */
@@ -560,23 +560,23 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
         std::cout << "Found string: " << stringBuffer << "\n";
         BEGIN(INITIAL);
         yylval.textValue = copyTokenText(stringBuffer);
-        return TOKEN_STRING;
+        return STRING;
     }
     BEGIN(INITIAL);
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
  /* Операторы и разделители */
-"..."       { std::cout << "Found varargs: " << yytext << "\n"; return TOKEN_VARARG; }
-".."        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_CONCAT; }
-"//"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_INT_DIV; }
-"<<"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_SHIFT_LEFT; }
-">>"        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_SHIFT_RIGHT; }
-"=="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_EQUAL; }
-"~="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_NOT_EQUAL; }
-"<="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_LESS_EQUAL; }
-">="        { std::cout << "Found operator: " << yytext << "\n"; return TOKEN_GREATER_EQUAL; }
-"::"        { std::cout << "Found label separator: " << yytext << "\n"; return TOKEN_LABEL; }
+"..."       { std::cout << "Found varargs: " << yytext << "\n"; return VARARG; }
+".."        { std::cout << "Found operator: " << yytext << "\n"; return CONCAT; }
+"//"        { std::cout << "Found operator: " << yytext << "\n"; return INT_DIV; }
+"<<"        { std::cout << "Found operator: " << yytext << "\n"; return LSHIFT; }
+">>"        { std::cout << "Found operator: " << yytext << "\n"; return RSHIFT; }
+"=="        { std::cout << "Found operator: " << yytext << "\n"; return EQ; }
+"~="        { std::cout << "Found operator: " << yytext << "\n"; return NE; }
+"<="        { std::cout << "Found operator: " << yytext << "\n"; return LE; }
+">="        { std::cout << "Found operator: " << yytext << "\n"; return GE; }
+"::"        { std::cout << "Found label separator: " << yytext << "\n"; return LABEL_SEP; }
 "+"         { std::cout << "Found operator: " << yytext << "\n"; return '+'; }
 "-"         { std::cout << "Found operator: " << yytext << "\n"; return '-'; }
 "*"         { std::cout << "Found operator: " << yytext << "\n"; return '*'; }
@@ -605,7 +605,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 {NAME_START}{NAME_SYMBOL}* {
     std::cout << "Found identifier: " << yytext << "\n";
     yylval.textValue = copyTokenText(yytext);
-    return TOKEN_IDENTIFIER;
+    return ID;
 }
 
  /* Игнорируемые пробельные символы */
@@ -614,7 +614,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
  /* Неизвестный символ */
 .|\n        {
     std::cout << "Error: unknown token: " << yytext << "\n";
-    return TOKEN_ERROR;
+    return INVALID;
 }
 
 %%
