@@ -3,7 +3,7 @@
 set -eu
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <path-to-lua_compiler>" >&2
+    echo "Usage: $0 <path-to-lua_lexer>" >&2
     exit 1
 fi
 
@@ -50,41 +50,41 @@ run_generated_test() {
 
 run_control_escape_test() {
     printf '%b' 'Found string: \a\b\f\r\t\v\nFound string: \0000\0377\0001\0014\0173\nFound string: \00012\n' > "$generated_output"
-    run_generated_test test/simple_types/control_escapes.lua
+    run_generated_test test/lexer/simple_types/control_escapes.lua
 }
 
 run_unicode_boundary_test() {
     printf '%b' 'Found string: \0000\0177\0302\0200\0337\0277\0340\0240\0200\0357\0277\0277\0360\0220\0200\0200\0367\0277\0277\0277\0370\0210\0200\0200\0200\0373\0277\0277\0277\0277\0374\0204\0200\0200\0200\0200\0375\0277\0277\0277\0277\0277\n' > "$generated_output"
-    run_generated_test test/simple_types/unicode_boundaries.lua
+    run_generated_test test/lexer/simple_types/unicode_boundaries.lua
 }
 
-run_test test/simple_types/numbers
-run_test test/simple_types/number_boundaries
-run_test test/simple_types/strings
-run_test test/simple_types/single_quoted_strings
-run_test test/simple_types/long_delimiters
+run_test test/lexer/simple_types/numbers
+run_test test/lexer/simple_types/number_boundaries
+run_test test/lexer/simple_types/strings
+run_test test/lexer/simple_types/single_quoted_strings
+run_test test/lexer/simple_types/long_delimiters
 run_control_escape_test
 run_unicode_boundary_test
-run_test test/simple_types/numbers_in_code
-run_test test/simple_types/strings_in_code
-run_test test/comments/comments
-run_test test/comments/long_delimiters
-run_test test/comments/comment_opening_boundaries
-run_test test/comments/comments_in_code
-run_test test/keywords/keywords
-run_test test/operators/operators
-run_test test/operators/operators_in_code
-run_test test/identifiers/identifiers
-run_test test/identifiers/keyword_boundaries
-run_test test/errors/invalid_escapes
-run_test test/errors/malformed_string_escapes
-run_test test/errors/invalid_long_delimiters
-run_test test/errors/unterminated_strings
-run_test test/errors/unterminated_long_string
-run_test test/errors/unterminated_multiline_comment
-run_test test/errors/unknown_tokens
-run_test test/complex/mixed_tokens
-run_test test/complex/control_flow
+run_test test/lexer/simple_types/numbers_in_code
+run_test test/lexer/simple_types/strings_in_code
+run_test test/lexer/comments/comments
+run_test test/lexer/comments/long_delimiters
+run_test test/lexer/comments/comment_opening_boundaries
+run_test test/lexer/comments/comments_in_code
+run_test test/lexer/keywords/keywords
+run_test test/lexer/operators/operators
+run_test test/lexer/operators/operators_in_code
+run_test test/lexer/identifiers/identifiers
+run_test test/lexer/identifiers/keyword_boundaries
+run_test test/lexer/errors/invalid_escapes
+run_test test/lexer/errors/malformed_string_escapes
+run_test test/lexer/errors/invalid_long_delimiters
+run_test test/lexer/errors/unterminated_strings
+run_test test/lexer/errors/unterminated_long_string
+run_test test/lexer/errors/unterminated_multiline_comment
+run_test test/lexer/errors/unknown_tokens
+run_test test/lexer/complex/mixed_tokens
+run_test test/lexer/complex/control_flow
 
 if [ "$test_failures" -ne 0 ]; then
     echo "FAILED: $test_failures test(s)" >&2
