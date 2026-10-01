@@ -74,6 +74,23 @@ st:
 |   TOKEN_LOCAL TOKEN_FUNCTION TOKEN_IDENTIFIER '(' par_list_em ')' block TOKEN_END
 |   variable_list '=' expr_list
 |   function_call
+|   if_st
+;
+
+if_st:
+    TOKEN_IF expr TOKEN_THEN block TOKEN_END
+|   TOKEN_IF expr TOKEN_THEN block TOKEN_ELSE block TOKEN_END
+|   TOKEN_IF expr TOKEN_THEN block elseif_st_list TOKEN_END
+|   TOKEN_IF expr TOKEN_THEN block elseif_st_list TOKEN_ELSE block TOKEN_END
+;
+
+elseif_st_list:
+    elseif_st
+|   elseif_st_list elseif_st
+;
+
+elseif_st:
+    TOKEN_ELSEIF expr TOKEN_THEN block
 ;
 
 func_name:
