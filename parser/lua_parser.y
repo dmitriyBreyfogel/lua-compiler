@@ -95,8 +95,10 @@ variable_list:
 
 variable:
     TOKEN_IDENTIFIER
-|   prefix_expr '[' expr ']'
-|   prefix_expr '.' TOKEN_IDENTIFIER
+|   variable '[' expr ']'
+|   variable '.' TOKEN_IDENTIFIER
+|   function_call '[' expr ']'
+|   function_call '.' TOKEN_IDENTIFIER
 ;
 
 prefix_expr:
@@ -106,8 +108,10 @@ prefix_expr:
 ;
 
 function_call:
-    prefix_expr args
-|   prefix_expr ':' TOKEN_IDENTIFIER args
+    variable args
+|   variable ':' TOKEN_IDENTIFIER args
+|   function_call args
+|   function_call ':' TOKEN_IDENTIFIER args
 ;
 
 args:
