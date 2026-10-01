@@ -68,6 +68,7 @@ st_list:
 
 st:
     ';'
+|   TOKEN_BREAK
 |   TOKEN_LOCAL name_list
 |   TOKEN_LOCAL name_list '=' expr_list
 |   TOKEN_FUNCTION func_name '(' par_list_em ')' block TOKEN_END
@@ -110,7 +111,6 @@ dotted_name:
 
 finish_st:
     %empty
-|   TOKEN_BREAK
 |   TOKEN_RETURN
 |   TOKEN_RETURN ';'
 |   TOKEN_RETURN expr_list
