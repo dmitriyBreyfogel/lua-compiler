@@ -116,6 +116,8 @@ function_call:
 
 args:
     '(' expr_list_em ')'
+|   TOKEN_STRING
+|   table_constructor
 ;
 
 expr_list:
@@ -128,6 +130,32 @@ expr_list_em:
 |   expr_list
 ;
 
+table_constructor:
+    '{' field_list_em '}'
+;
+
+field_list_em:
+    %empty
+|   field_list
+;
+
+field_list:
+    field
+|   field_list field_sep field
+|   field_list field_sep
+;
+
+field:
+    '[' expr ']' '=' expr
+|   TOKEN_IDENTIFIER '=' expr
+|   expr
+;
+
+field_sep:
+    ','
+|   ';'
+;
+
 expr:
     TOKEN_INTEGER
 |   TOKEN_HEX_INTEGER
@@ -138,6 +166,7 @@ expr:
 |   TOKEN_FALSE
 |   TOKEN_NIL
 |   prefix_expr
+|   table_constructor
 |   expr '+' expr
 |   expr '-' expr
 |   expr '*' expr
