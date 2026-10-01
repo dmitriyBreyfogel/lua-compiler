@@ -75,6 +75,7 @@ st:
 |   variable_list '=' expr_list
 |   function_call
 |   if_st
+|   TOKEN_WHILE expr TOKEN_DO block TOKEN_END
 ;
 
 if_st:
