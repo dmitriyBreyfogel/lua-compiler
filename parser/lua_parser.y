@@ -70,8 +70,20 @@ st:
     ';'
 |   TOKEN_LOCAL name_list
 |   TOKEN_LOCAL name_list '=' expr_list
+|   TOKEN_FUNCTION func_name '(' par_list_em ')' block TOKEN_END
+|   TOKEN_LOCAL TOKEN_FUNCTION TOKEN_IDENTIFIER '(' par_list_em ')' block TOKEN_END
 |   variable_list '=' expr_list
 |   function_call
+;
+
+func_name:
+    dotted_name
+|   dotted_name ':' TOKEN_IDENTIFIER
+;
+
+dotted_name:
+    TOKEN_IDENTIFIER
+|   dotted_name '.' TOKEN_IDENTIFIER
 ;
 
 finish_st:
@@ -130,6 +142,17 @@ expr_list_em:
 |   expr_list
 ;
 
+par_list_em:
+    %empty
+|   par_list
+;
+
+par_list:
+    name_list
+|   name_list ',' TOKEN_VARARG
+|   TOKEN_VARARG
+;
+
 table_constructor:
     '{' field_list_em '}'
 ;
@@ -165,8 +188,10 @@ expr:
 |   TOKEN_TRUE
 |   TOKEN_FALSE
 |   TOKEN_NIL
+|   TOKEN_VARARG
 |   prefix_expr
 |   table_constructor
+|   TOKEN_FUNCTION '(' par_list_em ')' block TOKEN_END
 |   expr '+' expr
 |   expr '-' expr
 |   expr '*' expr
