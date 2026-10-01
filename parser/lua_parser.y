@@ -76,6 +76,7 @@ st:
 |   function_call
 |   if_st
 |   TOKEN_WHILE expr TOKEN_DO block TOKEN_END
+|   TOKEN_REPEAT block TOKEN_UNTIL expr
 ;
 
 if_st:
