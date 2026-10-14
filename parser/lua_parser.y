@@ -65,14 +65,9 @@ void yyerror(const char* message)
 %precedence UNARY              /* Унарные -, not, # и ~ */
 %right '^'                     /* Степень: a ^ (b ^ c) */
 
-%start chunk /* Lua-файл */
+%start block /* Lua-файл */
 
 %%
-
-/* Весь исходный файл Lua */
-chunk:
-    block
-;
 
 /* Содержимое файла, функции, условия или цикла */
 block:
@@ -102,11 +97,9 @@ st:
 |   variable_list '=' expr_list                        /* Присваивание */
 |   function_call                                      /* Вызов функции */
 |   if_st                                               /* Условный оператор */
-|   WHILE expr DO block END                            /* Цикл while */
-|   REPEAT block UNTIL expr                            /* Цикл repeat */
-|   FOR ID '=' expr ',' expr DO block END              /* Числовой for без шага */
-|   FOR ID '=' expr ',' expr ',' expr DO block END     /* Числовой for с шагом */
-|   FOR name_list IN expr_list DO block END            /* Обобщённый for */
+|   for_st                                              /* Цикл for */
+|   while_st                                            /* Цикл while */
+|   repeat_st                                           /* Цикл repeat */
 ;
 
 /* Условный оператор if */
@@ -126,6 +119,23 @@ elseif_st_list:
 /* Одна ветка elseif */
 elseif_st:
     ELSEIF expr THEN block                             /* Условие и тело elseif */
+;
+
+/* Цикл for */
+for_st:
+    FOR ID '=' expr ',' expr DO block END              /* Числовой for без шага */
+|   FOR ID '=' expr ',' expr ',' expr DO block END     /* Числовой for с шагом */
+|   FOR name_list IN expr_list DO block END            /* Обобщённый for */
+;
+
+/* Цикл while */
+while_st:
+    WHILE expr DO block END
+;
+
+/* Цикл repeat */
+repeat_st:
+    REPEAT block UNTIL expr
 ;
 
 /* Имя объявляемой функции */
@@ -170,13 +180,6 @@ variable:
 |   function_call '.' ID                               /* f().name */
 ;
 
-/* Выражение, с которого начинаются доступы и вызовы */
-prefix_expr:
-    variable                                           /* Переменная */
-|   function_call                                      /* Вызов функции */
-|   '(' expr ')'                                       /* Выражение в скобках */
-;
-
 /* Вызов функции или метода */
 function_call:
     variable args                                      /* f(args) */
@@ -189,7 +192,7 @@ function_call:
 args:
     '(' expr_list_em ')'                               /* Аргументы в скобках */
 |   STRING                                             /* f "text" */
-|   table_constructor                                  /* f { key = value } */
+|   '{' field_list_em '}'                              /* f { key = value } */
 ;
 
 /* Одно или несколько выражений через запятую */
@@ -218,11 +221,6 @@ par_list:
 ;
 
 /* Вот тут начинаются наши классы - в луа таблицы, glhf*/
-
-/* Таблица, записанная в исходном коде */
-table_constructor:
-    '{' field_list_em '}'                              /* Табличный литерал */
-;
 
 /* Список полей таблицы, который может быть пустым */
 field_list_em:
@@ -261,8 +259,10 @@ expr:
 |   FALSE                                              /* false */
 |   NIL                                                /* nil */
 |   VARARG                                             /* ... */
-|   prefix_expr                                        /* Переменная, вызов или скобки */
-|   table_constructor                                  /* Таблица */
+|   variable                                           /* Переменная */
+|   function_call                                      /* Вызов функции */
+|   '(' expr ')'                                       /* Выражение в скобках */
+|   '{' field_list_em '}'                              /* Таблица */
 |   FUNCTION '(' par_list_em ')' block END             /* Анонимная функция */
 |   expr '+' expr                                      /* Сложение */
 |   expr '-' expr                                      /* Вычитание */
