@@ -54,7 +54,7 @@ void yyerror(const char* message)
 /* Приоритеты и ассоциативность операторов */
 %left OR                       /* or */
 %left AND                      /* and */
-%nonassoc '<' '>' LE GE EQ NE  /* Сравнения нельзя записывать цепочкой */
+%left '<' '>' LE GE EQ NE      /* Операторы сравнения */
 %left '|'                      /* Побитовое или */
 %left '~'                      /* Побитовое исключающее или */
 %left '&'                      /* Побитовое и */
@@ -64,6 +64,8 @@ void yyerror(const char* message)
 %left '*' '/' INT_DIV '%'      /* Умножение, деление, остаток */
 %precedence UNARY              /* Унарные -, not, # и ~ */
 %right '^'                     /* Степень: a ^ (b ^ c) */
+%precedence CALL_END           /* Завершение выражения перед вызовом */
+%precedence '('                /* Продолжение цепочки вызовов */
 
 %start block /* Lua-файл */
 
@@ -90,12 +92,19 @@ st_list:
 st:
     ';'                                                /* Пустой оператор */
 |   BREAK                                              /* Выход из цикла */
-|   LOCAL name_list                                    /* Локальные имена */
-|   LOCAL name_list '=' expr_list                      /* Локальные имена со значениями */
 |   FUNCTION func_name '(' par_list_em ')' block END   /* Объявление функции */
 |   LOCAL FUNCTION ID '(' par_list_em ')' block END    /* Локальная функция */
+|   GLOBAL FUNCTION ID '(' par_list_em ')' block END   /* Глобальная функция */
+|   LOCAL att_name_list                                /* Локальные имена */
+|   LOCAL att_name_list '=' expr_list                  /* Локальные имена со значениями */
+|   GLOBAL att_name_list                               /* Глобальные имена */
+|   GLOBAL att_name_list '=' expr_list                 /* Глобальные имена со значениями */
+|   GLOBAL attrib_em '*'                               /* Все имена глобальные */
 |   variable_list '=' expr_list                        /* Присваивание */
-|   function_call                                      /* Вызов функции */
+|   function_call %prec CALL_END                       /* Вызов функции */
+|   LABEL_SEP ID LABEL_SEP                             /* Метка */
+|   GOTO ID                                            /* Переход к метке */
+|   DO block END                                       /* Блок do */
 |   if_st                                               /* Условный оператор */
 |   for_st                                              /* Цикл for */
 |   while_st                                            /* Цикл while */
@@ -165,6 +174,23 @@ name_list:
 |   name_list ',' ID                                   /* Несколько имён */
 ;
 
+/* Одно или несколько имён с атрибутами */
+att_name_list:
+    attrib_em ID attrib_em                             /* Первое имя */
+|   att_name_list ',' ID attrib_em                     /* Следующее имя */
+;
+
+/* Атрибут объявления */
+attrib:
+    '<' ID '>'
+;
+
+/* Атрибут, который может отсутствовать */
+attrib_em:
+    %empty
+|   attrib
+;
+
 /* Одна или несколько переменных в присваивании */
 variable_list:
     variable                                           /* Одна переменная */
@@ -178,6 +204,8 @@ variable:
 |   variable '.' ID                                    /* table.name */
 |   function_call '[' expr ']'                         /* f()[key] */
 |   function_call '.' ID                               /* f().name */
+|   '(' expr ')' '[' expr ']'                         /* (value)[key] */
+|   '(' expr ')' '.' ID                                /* (value).name */
 ;
 
 /* Вызов функции или метода */
@@ -186,6 +214,8 @@ function_call:
 |   variable ':' ID args                                /* object:method(args) */
 |   function_call args                                  /* f()() */
 |   function_call ':' ID args                           /* f():method() */
+|   '(' expr ')' args                                  /* (f)() */
+|   '(' expr ')' ':' ID args                           /* (value):method() */
 ;
 
 /* Аргументы вызова функции */
@@ -216,8 +246,14 @@ par_list_em:
 /* Именованные параметры и vararg */
 par_list:
     name_list                                          /* Именованные параметры */
-|   name_list ',' VARARG                               /* Имена и ... */
-|   VARARG                                             /* Только ... */
+|   name_list ',' vararg_param                         /* Имена и vararg */
+|   vararg_param                                       /* Только vararg */
+;
+
+/* Параметр vararg */
+vararg_param:
+    VARARG                                             /* ... */
+|   VARARG ID                                          /* ... Name */
 ;
 
 /* Вот тут начинаются наши классы - в луа таблицы, glhf*/
@@ -259,9 +295,9 @@ expr:
 |   FALSE                                              /* false */
 |   NIL                                                /* nil */
 |   VARARG                                             /* ... */
-|   variable                                           /* Переменная */
-|   function_call                                      /* Вызов функции */
-|   '(' expr ')'                                       /* Выражение в скобках */
+|   variable %prec CALL_END                            /* Переменная */
+|   function_call %prec CALL_END                       /* Вызов функции */
+|   '(' expr ')' %prec CALL_END                        /* Выражение в скобках */
 |   '{' field_list_em '}'                              /* Таблица */
 |   FUNCTION '(' par_list_em ')' block END             /* Анонимная функция */
 |   expr '+' expr                                      /* Сложение */
