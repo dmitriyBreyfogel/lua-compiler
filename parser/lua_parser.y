@@ -180,15 +180,10 @@ att_name_list:
 |   att_name_list ',' ID attrib_em                     /* Следующее имя */
 ;
 
-/* Атрибут объявления */
-attrib:
-    '<' ID '>'
-;
-
 /* Атрибут, который может отсутствовать */
 attrib_em:
     %empty
-|   attrib
+|   '<' ID '>'
 ;
 
 /* Одна или несколько переменных в присваивании */
@@ -246,13 +241,9 @@ par_list_em:
 /* Именованные параметры и vararg */
 par_list:
     name_list                                          /* Именованные параметры */
-|   name_list ',' vararg_param                         /* Имена и vararg */
-|   vararg_param                                       /* Только vararg */
-;
-
-/* Параметр vararg */
-vararg_param:
-    VARARG                                             /* ... */
+|   name_list ',' VARARG                               /* Имена и ... */
+|   name_list ',' VARARG ID                            /* Имена и ... Name */
+|   VARARG                                             /* ... */
 |   VARARG ID                                          /* ... Name */
 ;
 
