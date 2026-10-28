@@ -52,6 +52,7 @@ void yyerror(const char* message)
 %token INVALID
 
 /* Приоритеты и ассоциативность операторов */
+%precedence EXPR_END            /* Конец выражения в списке или операторе */
 %left OR                       /* or */
 %left AND                      /* and */
 %left '<' '>' LE GE EQ NE      /* Операторы сравнения */
@@ -65,9 +66,45 @@ void yyerror(const char* message)
 %precedence UNARY              /* Унарные -, not, # и ~ */
 %right '^'                     /* Степень: a ^ (b ^ c) */
 %precedence CALL_END           /* Завершение выражения перед вызовом */
-%precedence '('                /* Продолжение цепочки вызовов */
+%precedence POSTFIX            /* Обращение к полю, индексу и вызов */
+%precedence '(' STRING '{' '[' '.' ':'  /* Продолжение цепочки выражения */
 
 %start block /* Lua-файл */
+
+/*
+
+Func<int, int, void> a;
+
+a(1, 2)
+choose_function(1, 2) {
+    if (a == func1) {
+        func1(1, 2)
+    }
+}
+
+
+function object.method.f() {
+
+    ...
+}
+
+id, parameters
+
+a :: (i32, i32) -> i32 {
+
+}
+
+b :: (i32, i32) {
+
+}
+
+struct FuncInfo {
+    std::string name;
+    std::vector<Type> paramTypes;
+}
+
+*/
+
 
 %%
 
@@ -100,8 +137,8 @@ st:
 |   GLOBAL att_name_list                               /* Глобальные имена */
 |   GLOBAL att_name_list '=' expr_list                 /* Глобальные имена со значениями */
 |   GLOBAL attrib_em '*'                               /* Все имена глобальные */
-|   variable_list '=' expr_list                        /* Присваивание */
-|   function_call %prec CALL_END                       /* Вызов функции */
+|   expr_list '=' expr_list                            /* Присваивание */
+|   expr %prec EXPR_END                                /* Выражение-оператор */
 |   LABEL_SEP ID LABEL_SEP                             /* Метка */
 |   GOTO ID                                            /* Переход к метке */
 |   DO block END                                       /* Блок do */
@@ -144,7 +181,7 @@ while_st:
 
 /* Цикл repeat */
 repeat_st:
-    REPEAT block UNTIL expr
+    REPEAT block UNTIL expr %prec EXPR_END
 ;
 
 /* Имя объявляемой функции */
@@ -186,33 +223,6 @@ attrib_em:
 |   '<' ID '>'
 ;
 
-/* Одна или несколько переменных в присваивании */
-variable_list:
-    variable                                           /* Одна переменная */
-|   variable_list ',' variable                         /* Несколько переменных */
-;
-
-/* Переменная: имя, поле таблицы или элемент по индексу */
-variable:
-    ID                                                 /* Простая переменная */
-|   variable '[' expr ']'                              /* table[key] */
-|   variable '.' ID                                    /* table.name */
-|   function_call '[' expr ']'                         /* f()[key] */
-|   function_call '.' ID                               /* f().name */
-|   '(' expr ')' '[' expr ']'                         /* (value)[key] */
-|   '(' expr ')' '.' ID                                /* (value).name */
-;
-
-/* Вызов функции или метода */
-function_call:
-    variable args                                      /* f(args) */
-|   variable ':' ID args                                /* object:method(args) */
-|   function_call args                                  /* f()() */
-|   function_call ':' ID args                           /* f():method() */
-|   '(' expr ')' args                                  /* (f)() */
-|   '(' expr ')' ':' ID args                           /* (value):method() */
-;
-
 /* Аргументы вызова функции */
 args:
     '(' expr_list_em ')'                               /* Аргументы в скобках */
@@ -222,8 +232,8 @@ args:
 
 /* Одно или несколько выражений через запятую */
 expr_list:
-    expr                                               /* Одно выражение */
-|   expr_list ',' expr                                 /* Несколько выражений */
+    expr %prec EXPR_END                                /* Одно выражение */
+|   expr_list ',' expr %prec EXPR_END                  /* Несколько выражений */
 ;
 
 /* Список выражений, который может быть пустым */
@@ -252,14 +262,13 @@ par_list:
 /* Список полей таблицы, который может быть пустым */
 field_list_em:
     %empty                                             /* Пустая таблица */
-|   field_list                                         /* Таблица с полями */
+|   field_list field_sep_end                           /* Таблица с полями */
 ;
 
 /* Непустой список полей таблицы */
 field_list:
     field                                              /* Первое поле */
 |   field_list field_sep field                         /* Следующее поле */
-|   field_list field_sep                               /* Разделитель после последнего поля */
 ;
 
 /* Одно поле таблицы */
@@ -275,6 +284,12 @@ field_sep:
 |   ';'                                                /* Разделитель полей */
 ;
 
+/* Необязательный разделитель после последнего поля */
+field_sep_end:
+    %empty
+|   field_sep
+;
+
 /* Любое выражение Lua */
 expr:
     INT                                                /* Десятичное целое */
@@ -286,9 +301,12 @@ expr:
 |   FALSE                                              /* false */
 |   NIL                                                /* nil */
 |   VARARG                                             /* ... */
-|   variable %prec CALL_END                            /* Переменная */
-|   function_call %prec CALL_END                       /* Вызов функции */
+|   ID %prec CALL_END                                  /* Имя */
 |   '(' expr ')' %prec CALL_END                        /* Выражение в скобках */
+|   expr '[' expr ']' %prec POSTFIX                    /* Обращение по индексу */
+|   expr '.' ID %prec POSTFIX                          /* Обращение к полю */
+|   expr args %prec POSTFIX                            /* Вызов функции */
+|   expr ':' ID args %prec POSTFIX                     /* Вызов метода */
 |   '{' field_list_em '}'                              /* Таблица */
 |   FUNCTION '(' par_list_em ')' block END             /* Анонимная функция */
 |   expr '+' expr                                      /* Сложение */
@@ -319,3 +337,5 @@ expr:
 ;
 
 %%
+
+// first level object 
