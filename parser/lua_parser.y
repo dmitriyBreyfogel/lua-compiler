@@ -17,17 +17,19 @@ void yyerror(const char* message)
 %union {
     long long integerValue;
     double floatValue;
+    bool booleanValue;
     char* textValue;
 }
 
 /* Числовые и текстовые токены с сем. значениями */
-%token <integerValue> INT HEX_INT
-%token <floatValue> FLOAT HEX_FLOAT
+%token <integerValue> INT
+%token <floatValue> FLOAT
+%token <booleanValue> BOOLEAN
 %token <textValue> ID STRING
 
 /* Константы Lua */
 
-%token TRUE FALSE NIL
+%token NIL
 
 /* Ключевые слова операторов и объявлений */
 
@@ -225,13 +227,10 @@ field_sep_end: %empty
 ;
 
 /* Любое выражение Lua */
-expr: INT                                               /* Десятичное целое */
-|   HEX_INT                                            /* Шестнадцатеричное целое */
-|   FLOAT                                              /* Десятичное вещественное */
-|   HEX_FLOAT                                          /* Шестнадцатеричное вещественное */
+expr: INT                                               /* Целое число */
+|   FLOAT                                              /* Вещественное число */
 |   STRING                                             /* Строка */
-|   TRUE                                               /* true */
-|   FALSE                                              /* false */
+|   BOOLEAN                                            /* true или false */
 |   NIL                                                /* nil */
 |   VARARG                                             /* ... */
 |   ID                                                 /* Имя */

@@ -112,12 +112,12 @@ static int printNumberToken(const char* text)
     if (isHexadecimal && !isFloat) {
         yylval.integerValue = parseHexadecimalInteger(text);
         std::cout << "Found hexadecimal integer: " << yylval.integerValue << "\n";
-        return HEX_INT;
+        return INT;
     } 
     else if (isHexadecimal) {
         yylval.floatValue = value;
         std::cout << "Found hexadecimal float: " << value << "\n";
-        return HEX_FLOAT;
+        return FLOAT;
     } 
     else if (isFloat) {
         yylval.floatValue = value;
@@ -180,7 +180,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "else"      { std::cout << "Found keyword: " << yytext << "\n"; return ELSE; }
 "elseif"    { std::cout << "Found keyword: " << yytext << "\n"; return ELSEIF; }
 "end"       { std::cout << "Found keyword: " << yytext << "\n"; return END; }
-"false"     { std::cout << "Found keyword: " << yytext << "\n"; return FALSE; }
+"false"     { yylval.booleanValue = false; std::cout << "Found boolean: false\n"; return BOOLEAN; }
 "for"       { std::cout << "Found keyword: " << yytext << "\n"; return FOR; }
 "function"  { std::cout << "Found keyword: " << yytext << "\n"; return FUNCTION; }
 "global"    { std::cout << "Found keyword: " << yytext << "\n"; return GLOBAL; }
@@ -194,7 +194,7 @@ DOT_DECIMAL_NUMERAL  \.[0-9]([0-9A-Fa-f.]|[eE][+-]?)*([A-Za-z_][A-Za-z0-9_]*)?
 "repeat"    { std::cout << "Found keyword: " << yytext << "\n"; return REPEAT; }
 "return"    { std::cout << "Found keyword: " << yytext << "\n"; return RETURN; }
 "then"      { std::cout << "Found keyword: " << yytext << "\n"; return THEN; }
-"true"      { std::cout << "Found keyword: " << yytext << "\n"; return TRUE; }
+"true"      { yylval.booleanValue = true; std::cout << "Found boolean: true\n"; return BOOLEAN; }
 "until"     { std::cout << "Found keyword: " << yytext << "\n"; return UNTIL; }
 "while"     { std::cout << "Found keyword: " << yytext << "\n"; return WHILE; }
 
