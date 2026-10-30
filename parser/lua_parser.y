@@ -52,7 +52,6 @@ void yyerror(const char* message)
 %token INVALID
 
 /* Приоритеты и ассоциативность операторов */
-%precedence EXPR_END            /* Конец выражения в списке или операторе */
 %left OR                       /* or */
 %left AND                      /* and */
 %left '<' '>' LE GE EQ NE      /* Операторы сравнения */
@@ -131,7 +130,7 @@ while_st: WHILE expr DO block END
 ;
 
 /* Цикл repeat */
-repeat_st: REPEAT block UNTIL expr %prec EXPR_END
+repeat_st: REPEAT block UNTIL expr
 ;
 
 /* Имя объявляемой функции */
@@ -198,8 +197,8 @@ function_call: variable args                           /* f(args) */
 ;
 
 /* Одно или несколько выражений через запятую */
-expr_list: expr %prec EXPR_END                         /* Одно выражение */
-|   expr_list ',' expr %prec EXPR_END                  /* Несколько выражений */
+expr_list: expr                                         /* Одно выражение */
+|   expr_list ',' expr                                  /* Несколько выражений */
 ;
 
 /* Список выражений, который может быть пустым */
