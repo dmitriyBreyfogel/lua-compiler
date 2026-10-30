@@ -52,6 +52,7 @@ void yyerror(const char* message)
 %token INVALID
 
 /* Приоритеты и ассоциативность операторов */
+%precedence EXPR_END            /* Конец выражения в списке или операторе */
 %left OR                       /* or */
 %left AND                      /* and */
 %left '<' '>' LE GE EQ NE      /* Операторы сравнения */
@@ -62,13 +63,11 @@ void yyerror(const char* message)
 %right CONCAT                  /* Склейка строк: a .. (b .. c) */
 %left '+' '-'                  /* Сложение и вычитание */
 %left '*' '/' INT_DIV '%'      /* Умножение, деление, остаток */
-%precedence UNARY              /* Унарные -, not, # и ~ */
+%right UNARY                   /* Унарные -, not, # и ~ */
 %right '^'                     /* Степень: a ^ (b ^ c) */
-%precedence CALL_END           /* Завершение выражения перед вызовом */
-%nonassoc '(' ')'              /* Скобки вызова функции */
+%left '(' STRING '{' '[' '.' ':'        /* Продолжение цепочки выражения */
 
 %start block /* Lua-файл */
-
 %%
 
 /* Содержимое файла, функции, условия или цикла */
@@ -86,8 +85,8 @@ st: ';'                                                /* Пустой опер�
 |   GLOBAL att_name_list                               /* Глобальные имена */
 |   GLOBAL att_name_list '=' expr_list                 /* Глобальные имена со значениями */
 |   GLOBAL attrib_em '*'                               /* Все имена глобальные */
-|   variable_list '=' expr_list                        /* Присваивание */
-|   function_call %prec CALL_END                       /* Вызов функции */
+|   expr_list '=' expr_list                            /* Присваивание */
+|   expr %prec EXPR_END                                /* Выражение-оператор */
 |   LABEL_SEP ID LABEL_SEP                             /* Метка */
 |   GOTO ID                                            /* Переход к метке */
 |   DO block END                                       /* Блок do */
@@ -130,7 +129,8 @@ while_st: WHILE expr DO block END
 ;
 
 /* Цикл repeat */
-repeat_st: REPEAT block UNTIL expr
+repeat_st:
+     REPEAT block UNTIL expr %prec EXPR_END
 ;
 
 /* Имя объявляемой функции */
@@ -166,39 +166,16 @@ attrib_em: %empty
 |   '<' ID '>'
 ;
 
-/* Имя, поле таблицы или элемент по индексу */
-variable: ID                                        /* Простая переменная */
-|   variable '[' expr ']'                           /* table[key] */
-|   variable '.' ID                                 /* table.name */
-|   function_call '[' expr ']'                      /* f()[key] */
-|   function_call '.' ID                            /* f().name */
-|   '(' expr ')' '[' expr ']'                       /* (value)[key] */
-|   '(' expr ')' '.' ID                             /* (value).name */
-;
-
-/* Одна или несколько переменных в присваивании */
-variable_list: variable                               /* Одна переменная */
-|   variable_list ',' variable                        /* Несколько переменных */
-;
-
 /* Аргументы вызова функции */
 args: '(' expr_list_em ')'                             /* Аргументы в скобках */
 |   STRING                                             /* f "text" */
 |   '{' field_list_em '}'                              /* f { key = value } */
 ;
 
-/* Вызов функции или метода */
-function_call: variable args                           /* f(args) */
-|   variable ':' ID args                              /* object:method(args) */
-|   function_call args                                /* f()() */
-|   function_call ':' ID args                         /* f():method() */
-|   '(' expr ')' args                                 /* (f)() */
-|   '(' expr ')' ':' ID args                          /* (value):method() */
-;
-
 /* Одно или несколько выражений через запятую */
-expr_list: expr                                         /* Одно выражение */
-|   expr_list ',' expr                                  /* Несколько выражений */
+expr_list:
+     expr %prec EXPR_END                                /* Одно выражение */
+|   expr_list ',' expr %prec EXPR_END                  /* Несколько выражений */
 ;
 
 /* Список выражений, который может быть пустым */
@@ -257,9 +234,12 @@ expr: INT                                               /* Десятичное 
 |   FALSE                                              /* false */
 |   NIL                                                /* nil */
 |   VARARG                                             /* ... */
-|   variable %prec CALL_END                            /* Переменная */
-|   function_call %prec CALL_END                       /* Вызов функции */
-|   '(' expr ')' %prec CALL_END                        /* Выражение в скобках */
+|   ID                                                 /* Имя */
+|   '(' expr ')'                                       /* Выражение в скобках */
+|   expr '[' expr ']'                                  /* Обращение по индексу */
+|   expr '.' ID                                        /* Обращение к полю */
+|   expr args                                          /* Вызов функции */
+|   expr ':' ID args                                   /* Вызов метода */
 |   '{' field_list_em '}'                              /* Таблица */
 |   FUNCTION '(' par_list_em ')' block END             /* Анонимная функция */
 |   expr '+' expr                                      /* Сложение */
