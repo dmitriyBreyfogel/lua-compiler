@@ -12,13 +12,14 @@ using ast::NodeType;
 struct Scope {
     std::unordered_map<std::string, std::uint64_t> names;
     std::unordered_map<std::string, std::uint64_t> labels;
+    int functionDepth;
 };
 
 class Analyzer {
 public:
     SemanticResult run(const Node& block)
     {
-        scopes_.push_back({});
+        pushScope();
         visitBlock(block, false);
         return std::move(result_);
     }
@@ -48,7 +49,7 @@ private:
     void visitBlock(const Node& block, bool createScope)
     {
         if (createScope) {
-            scopes_.push_back({});
+            pushScope();
         }
 
         const Node* statements = child(block, "statements");
@@ -112,7 +113,7 @@ private:
             visitNode(child(node, "start"));
             visitNode(child(node, "finish"));
             visitNode(child(node, "step"));
-            scopes_.push_back({});
+            pushScope();
             declareNode(*child(node, "variable"), SymbolType::LoopVariable);
             ++loopDepth_;
             visitNode(child(node, "body"));
@@ -121,7 +122,7 @@ private:
             break;
         case NodeType::GenericForStatement:
             visitList(child(node, "iterators"));
-            scopes_.push_back({});
+            pushScope();
             declareNames(child(node, "names"), SymbolType::LoopVariable);
             ++loopDepth_;
             visitNode(child(node, "body"));
@@ -197,28 +198,27 @@ private:
 
     void visitFunction(const Node& node)
     {
-        scopes_.push_back({});
+        ++functionDepth_;
+        pushScope();
         const Node* parameters = child(node, "parameters");
+        bool acceptsVararg = false;
         if (parameters != nullptr) {
             for (const ast::Child& item : parameters->children()) {
                 if (item.node->type() == NodeType::VarargExpression) {
-                    hasVarargParameter_ = true;
+                    acceptsVararg = true;
                 } else {
                     declareNode(*item.node, SymbolType::Parameter);
                 }
             }
         }
 
-        ++functionDepth_;
-        const bool previousVararg = varargDepth_ > 0;
-        if (hasVarargParameter_) {
+        if (acceptsVararg) {
             ++varargDepth_;
         }
         visitNode(child(node, "body"));
-        if (hasVarargParameter_) {
+        if (acceptsVararg) {
             --varargDepth_;
         }
-        hasVarargParameter_ = previousVararg;
         --functionDepth_;
         scopes_.pop_back();
     }
@@ -237,10 +237,6 @@ private:
     {
         const std::string& name = node.value();
         Scope& scope = type == SymbolType::Global ? scopes_.front() : scopes_.back();
-        if (scope.names.count(name) != 0) {
-            error(node, "duplicate declaration: " + name);
-            return;
-        }
         const std::uint64_t id = declare(name, type, node);
         scope.names[name] = id;
         bind(node, id);
@@ -259,6 +255,10 @@ private:
         for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
             const auto found = scope->names.find(name);
             if (found != scope->names.end()) {
+                const Symbol& symbol = result_.symbols_[found->second - 1];
+                if (scope->functionDepth < functionDepth_ && symbol.type != SymbolType::Global) {
+                    result_.upvalues_.insert(node.id());
+                }
                 return found->second;
             }
         }
@@ -296,12 +296,16 @@ private:
         result_.diagnostics_.push_back({node.id(), message});
     }
 
+    void pushScope()
+    {
+        scopes_.push_back({{}, {}, functionDepth_});
+    }
+
     SemanticResult result_;
     std::vector<Scope> scopes_;
     int loopDepth_ = 0;
     int functionDepth_ = 0;
     int varargDepth_ = 0;
-    bool hasVarargParameter_ = false;
 };
 
 }
@@ -323,6 +327,11 @@ const Symbol* SemanticResult::bindingFor(const ast::Node& node) const
         return nullptr;
     }
     return &symbols_[found->second - 1];
+}
+
+bool SemanticResult::isUpvalue(const ast::Node& node) const
+{
+    return upvalues_.count(node.id()) != 0;
 }
 
 SemanticResult SemanticAnalyzer::analyze(const ast::Node& block)

@@ -38,8 +38,17 @@ int main()
     assignment->addChild("targets", std::move(targets));
     statements->addChild("item[1]", std::move(assignment));
 
+    auto function = lua::ast::makeNode(lua::ast::NodeType::FunctionExpression);
+    function->addChild("parameters", list());
+    auto functionStatements = list();
+    auto capturedValue = lua::ast::makeNode(lua::ast::NodeType::Identifier, "value");
+    const lua::ast::Node& capturedReference = *capturedValue;
+    functionStatements->addChild("item[0]", std::move(capturedValue));
+    function->addChild("body", block(std::move(functionStatements)));
+    statements->addChild("item[2]", std::move(function));
+
     auto invalidBreak = lua::ast::makeNode(lua::ast::NodeType::BreakStatement);
-    statements->addChild("item[2]", std::move(invalidBreak));
+    statements->addChild("item[3]", std::move(invalidBreak));
 
     auto program = block(std::move(statements));
     lua::semantic::SemanticAnalyzer analyzer;
@@ -49,6 +58,7 @@ int main()
     assert(targetSymbol != nullptr);
     assert(targetSymbol->name == "value");
     assert(targetSymbol->type == lua::semantic::SymbolType::Local);
+    assert(result.isUpvalue(capturedReference));
     assert(result.diagnostics().size() == 1);
     assert(result.diagnostics()[0].message == "break outside loop");
 }
