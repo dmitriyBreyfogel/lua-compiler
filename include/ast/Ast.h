@@ -1,24 +1,10 @@
 #pragma once
 
-#include <string>
 #include "ast/Node.h"
+#include "ast/expression/Expressions.h"
+#include "ast/statement/Statements.h"
 
 namespace lua::ast {
-
-class ExpressionNode : public Node {
-public:
-    ExpressionNode(NodeType type, std::string value = {});
-};
-
-class StatementNode : public Node {
-public:
-    StatementNode(NodeType type, std::string value = {});
-};
-
-class BlockNode : public StatementNode {
-public:
-    BlockNode();
-};
 
 class ListNode : public Node {
 public:
