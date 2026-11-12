@@ -23,6 +23,7 @@ struct Symbol {
     std::string name;
     SymbolType type;
     std::uint64_t declarationId;
+    bool readOnly;
 };
 
 struct Diagnostic {

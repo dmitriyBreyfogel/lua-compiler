@@ -41,6 +41,8 @@ expect_error test/semantic/invalid/vararg_outside_function.lua "vararg outside f
 expect_error test/semantic/invalid/unknown_label.lua "unknown label: missing"
 expect_error test/semantic/invalid/duplicate_label.lua "duplicate label: again"
 expect_error test/semantic/invalid/goto_into_local_scope.lua "goto jumps into scope of local variable: ready"
+expect_error test/semantic/invalid/assign_const.lua "assignment to read-only variable: value"
+expect_error test/semantic/invalid/unknown_attribute.lua "unknown local attribute: unknown"
 
 if [ "$failures" -ne 0 ]; then
     echo "FAILED: $failures semantic test(s)" >&2

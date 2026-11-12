@@ -119,7 +119,7 @@ private:
             break;
         case NodeType::AssignmentStatement:
             visitList(child(node, "values"));
-            visitList(child(node, "targets"));
+            visitAssignmentTargets(child(node, "targets"));
             break;
         case NodeType::FunctionDeclaration:
             visitFunctionDeclaration(node);
@@ -266,8 +266,39 @@ private:
     std::uint64_t declare(const std::string& name, SymbolType type, const Node& node)
     {
         const std::uint64_t id = result_.symbols_.size() + 1;
-        result_.symbols_.push_back({id, name, type, node.id()});
+        result_.symbols_.push_back({id, name, type, node.id(), isReadOnly(node)});
         return id;
+    }
+
+    bool isReadOnly(const Node& node)
+    {
+        for (const ast::Child& child : node.children()) {
+            if (child.node->type() != NodeType::Attribute) {
+                continue;
+            }
+            if (child.node->value() == "const" || child.node->value() == "close") {
+                return true;
+            }
+            error(*child.node, "unknown local attribute: " + child.node->value());
+        }
+        return false;
+    }
+
+    void visitAssignmentTargets(const Node* targets)
+    {
+        if (targets == nullptr) {
+            return;
+        }
+        for (const ast::Child& item : targets->children()) {
+            visit(*item.node);
+            if (item.node->type() != NodeType::Identifier) {
+                continue;
+            }
+            const Symbol* symbol = result_.bindingFor(*item.node);
+            if (symbol != nullptr && symbol->readOnly) {
+                error(*item.node, "assignment to read-only variable: " + symbol->name);
+            }
+        }
     }
 
     std::uint64_t resolveName(const Node& node)
