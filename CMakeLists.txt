@@ -51,10 +51,15 @@ add_custom_command(
     VERBATIM
 )
 
-add_executable(lua_compiler
-    src/main.cpp
+add_library(lua_ast
     src/ast/Ast.cpp
     src/ast/DotWriter.cpp
+    src/ast/ParseResult.cpp
+)
+target_include_directories(lua_ast PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+add_executable(lua_compiler
+    src/main.cpp
     "${GENERATED_LEXER_FILE}"
     "${GENERATED_PARSER_FILE}"
 )
@@ -65,6 +70,9 @@ add_executable(lua_lexer
     "${GENERATED_PARSER_FILE}"
 )
 
+target_link_libraries(lua_compiler PRIVATE lua_ast)
+target_link_libraries(lua_lexer PRIVATE lua_ast)
+
 set_source_files_properties(
     "${GENERATED_LEXER_FILE}"
     "${GENERATED_PARSER_FILE}"
@@ -73,14 +81,11 @@ set_source_files_properties(
 
 target_include_directories(lua_compiler PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(lua_lexer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_include_directories(lua_compiler PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 if(BUILD_TESTING)
     add_executable(ast_dot_writer_test
         test/ast/dot_writer_test.cpp
-        src/ast/Ast.cpp
-        src/ast/DotWriter.cpp
     )
-    target_include_directories(ast_dot_writer_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(ast_dot_writer_test PRIVATE lua_ast)
     add_test(NAME ast_dot_writer COMMAND ast_dot_writer_test)
 endif()

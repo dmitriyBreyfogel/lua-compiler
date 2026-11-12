@@ -56,6 +56,9 @@ const char* nodeKindName(NodeKind kind) noexcept
     switch (kind) {
     case NodeKind::Chunk: return "Chunk";
     case NodeKind::Block: return "Block";
+    case NodeKind::List: return "List";
+    case NodeKind::DeclarationName: return "DeclarationName";
+    case NodeKind::Attribute: return "Attribute";
     case NodeKind::EmptyStatement: return "EmptyStatement";
     case NodeKind::BreakStatement: return "BreakStatement";
     case NodeKind::FunctionDeclaration: return "FunctionDeclaration";

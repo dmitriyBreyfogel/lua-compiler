@@ -10,6 +10,9 @@ namespace lua::ast {
 enum class NodeKind {
     Chunk,
     Block,
+    List,
+    DeclarationName,
+    Attribute,
     EmptyStatement,
     BreakStatement,
     FunctionDeclaration,
