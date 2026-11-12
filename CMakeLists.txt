@@ -88,4 +88,10 @@ if(BUILD_TESTING)
     )
     target_link_libraries(ast_dot_writer_test PRIVATE lua_ast)
     add_test(NAME ast_dot_writer COMMAND ast_dot_writer_test)
+
+    add_test(
+        NAME ast_dot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/test/ast/run_ast_dot_tests.sh" $<TARGET_FILE:lua_compiler>
+    )
+    set_tests_properties(ast_dot PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
