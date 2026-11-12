@@ -7,8 +7,7 @@
 
 namespace lua::ast {
 
-enum class NodeKind {
-    Chunk,
+enum class NodeType {
     Block,
     List,
     DeclarationName,
@@ -58,10 +57,10 @@ struct Child {
 
 class Node {
 public:
-    Node(NodeKind kind, std::string value = {});
+    Node(NodeType type, std::string value = {});
 
     std::uint64_t id() const;
-    NodeKind kind() const;
+    NodeType type() const;
     const std::string& value() const;
     const std::vector<Child>& children() const;
 
@@ -70,12 +69,12 @@ public:
 
 private:
     std::uint64_t id_;
-    NodeKind kind_;
+    NodeType type_;
     std::string value_;
     std::vector<Child> children_;
 };
 
-NodePtr makeNode(NodeKind kind, std::string value = {});
-const char* nodeKindName(NodeKind kind);
+NodePtr makeNode(NodeType type, std::string value = {});
+const char* nodeTypeName(NodeType type);
 
 } // namespace lua::ast

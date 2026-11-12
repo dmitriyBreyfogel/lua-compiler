@@ -10,8 +10,8 @@ std::uint64_t nextNodeId = 1;
 
 }
 
-Node::Node(NodeKind kind, std::string value)
-    : id_(nextNodeId++), kind_(kind), value_(std::move(value))
+Node::Node(NodeType type, std::string value)
+    : id_(nextNodeId++), type_(type), value_(std::move(value))
 {
 }
 
@@ -20,9 +20,9 @@ std::uint64_t Node::id() const
     return id_;
 }
 
-NodeKind Node::kind() const
+NodeType Node::type() const
 {
-    return kind_;
+    return type_;
 }
 
 const std::string& Node::value() const
@@ -46,52 +46,51 @@ Node& Node::addChild(std::string role, Node* child)
     return addChild(std::move(role), NodePtr(child));
 }
 
-NodePtr makeNode(NodeKind kind, std::string value)
+NodePtr makeNode(NodeType type, std::string value)
 {
-    return std::make_unique<Node>(kind, std::move(value));
+    return std::make_unique<Node>(type, std::move(value));
 }
 
-const char* nodeKindName(NodeKind kind)
+const char* nodeTypeName(NodeType type)
 {
-    switch (kind) {
-    case NodeKind::Chunk: return "Chunk";
-    case NodeKind::Block: return "Block";
-    case NodeKind::List: return "List";
-    case NodeKind::DeclarationName: return "DeclarationName";
-    case NodeKind::Attribute: return "Attribute";
-    case NodeKind::EmptyStatement: return "EmptyStatement";
-    case NodeKind::BreakStatement: return "BreakStatement";
-    case NodeKind::FunctionDeclaration: return "FunctionDeclaration";
-    case NodeKind::LocalDeclaration: return "LocalDeclaration";
-    case NodeKind::GlobalDeclaration: return "GlobalDeclaration";
-    case NodeKind::GlobalAllDeclaration: return "GlobalAllDeclaration";
-    case NodeKind::AssignmentStatement: return "AssignmentStatement";
-    case NodeKind::CallStatement: return "CallStatement";
-    case NodeKind::LabelStatement: return "LabelStatement";
-    case NodeKind::GotoStatement: return "GotoStatement";
-    case NodeKind::IfStatement: return "IfStatement";
-    case NodeKind::ElseIfBranch: return "ElseIfBranch";
-    case NodeKind::NumericForStatement: return "NumericForStatement";
-    case NodeKind::GenericForStatement: return "GenericForStatement";
-    case NodeKind::WhileStatement: return "WhileStatement";
-    case NodeKind::RepeatStatement: return "RepeatStatement";
-    case NodeKind::ReturnStatement: return "ReturnStatement";
-    case NodeKind::IntegerLiteral: return "IntegerLiteral";
-    case NodeKind::FloatLiteral: return "FloatLiteral";
-    case NodeKind::StringLiteral: return "StringLiteral";
-    case NodeKind::BooleanLiteral: return "BooleanLiteral";
-    case NodeKind::NilLiteral: return "NilLiteral";
-    case NodeKind::VarargExpression: return "VarargExpression";
-    case NodeKind::Identifier: return "Identifier";
-    case NodeKind::UnaryExpression: return "UnaryExpression";
-    case NodeKind::BinaryExpression: return "BinaryExpression";
-    case NodeKind::IndexExpression: return "IndexExpression";
-    case NodeKind::FieldExpression: return "FieldExpression";
-    case NodeKind::CallExpression: return "CallExpression";
-    case NodeKind::MethodCallExpression: return "MethodCallExpression";
-    case NodeKind::TableConstructor: return "TableConstructor";
-    case NodeKind::TableField: return "TableField";
-    case NodeKind::FunctionExpression: return "FunctionExpression";
+    switch (type) {
+    case NodeType::Block: return "Block";
+    case NodeType::List: return "List";
+    case NodeType::DeclarationName: return "DeclarationName";
+    case NodeType::Attribute: return "Attribute";
+    case NodeType::EmptyStatement: return "EmptyStatement";
+    case NodeType::BreakStatement: return "BreakStatement";
+    case NodeType::FunctionDeclaration: return "FunctionDeclaration";
+    case NodeType::LocalDeclaration: return "LocalDeclaration";
+    case NodeType::GlobalDeclaration: return "GlobalDeclaration";
+    case NodeType::GlobalAllDeclaration: return "GlobalAllDeclaration";
+    case NodeType::AssignmentStatement: return "AssignmentStatement";
+    case NodeType::CallStatement: return "CallStatement";
+    case NodeType::LabelStatement: return "LabelStatement";
+    case NodeType::GotoStatement: return "GotoStatement";
+    case NodeType::IfStatement: return "IfStatement";
+    case NodeType::ElseIfBranch: return "ElseIfBranch";
+    case NodeType::NumericForStatement: return "NumericForStatement";
+    case NodeType::GenericForStatement: return "GenericForStatement";
+    case NodeType::WhileStatement: return "WhileStatement";
+    case NodeType::RepeatStatement: return "RepeatStatement";
+    case NodeType::ReturnStatement: return "ReturnStatement";
+    case NodeType::IntegerLiteral: return "IntegerLiteral";
+    case NodeType::FloatLiteral: return "FloatLiteral";
+    case NodeType::StringLiteral: return "StringLiteral";
+    case NodeType::BooleanLiteral: return "BooleanLiteral";
+    case NodeType::NilLiteral: return "NilLiteral";
+    case NodeType::VarargExpression: return "VarargExpression";
+    case NodeType::Identifier: return "Identifier";
+    case NodeType::UnaryExpression: return "UnaryExpression";
+    case NodeType::BinaryExpression: return "BinaryExpression";
+    case NodeType::IndexExpression: return "IndexExpression";
+    case NodeType::FieldExpression: return "FieldExpression";
+    case NodeType::CallExpression: return "CallExpression";
+    case NodeType::MethodCallExpression: return "MethodCallExpression";
+    case NodeType::TableConstructor: return "TableConstructor";
+    case NodeType::TableField: return "TableField";
+    case NodeType::FunctionExpression: return "FunctionExpression";
     }
 
     return "Unknown";

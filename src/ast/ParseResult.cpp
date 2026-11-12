@@ -6,23 +6,23 @@ namespace lua::ast {
 
 namespace {
 
-NodePtr parsedChunk;
+NodePtr parsedBlock;
 
 }
 
-void setParsedChunk(NodePtr chunk)
+void setParsedBlock(NodePtr block)
 {
-    parsedChunk = std::move(chunk);
+    parsedBlock = std::move(block);
 }
 
-NodePtr takeParsedChunk()
+NodePtr takeParsedBlock()
 {
-    return std::move(parsedChunk);
+    return std::move(parsedBlock);
 }
 
-void clearParsedChunk()
+void clearParsedBlock()
 {
-    parsedChunk.reset();
+    parsedBlock.reset();
 }
 
 } // namespace lua::ast

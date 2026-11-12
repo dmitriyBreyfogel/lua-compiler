@@ -25,7 +25,7 @@ std::string escapeDot(const std::string& value)
 
 void writeNode(std::ostream& output, const Node& node)
 {
-    output << "  node_" << node.id() << " [label=\"" << nodeKindName(node.kind());
+    output << "  node_" << node.id() << " [label=\"" << nodeTypeName(node.type());
     if (!node.value().empty()) {
         output << "\\n" << escapeDot(node.value());
     }

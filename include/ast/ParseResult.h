@@ -4,8 +4,8 @@
 
 namespace lua::ast {
 
-void setParsedChunk(NodePtr chunk);
-NodePtr takeParsedChunk();
-void clearParsedChunk();
+void setParsedBlock(NodePtr block);
+NodePtr takeParsedBlock();
+void clearParsedBlock();
 
 } // namespace lua::ast
