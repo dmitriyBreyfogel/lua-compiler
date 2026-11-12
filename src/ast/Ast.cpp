@@ -4,21 +4,6 @@
 
 namespace lua::ast {
 
-ListNode::ListNode()
-    : Node(NodeType::List)
-{
-}
-
-DeclarationNameNode::DeclarationNameNode(std::string value)
-    : Node(NodeType::DeclarationName, std::move(value))
-{
-}
-
-AttributeNode::AttributeNode(std::string value)
-    : Node(NodeType::Attribute, std::move(value))
-{
-}
-
 NodePtr makeNode(NodeType type, std::string value)
 {
     switch (type) {

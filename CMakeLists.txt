@@ -54,6 +54,7 @@ add_custom_command(
 add_library(lua_ast
     src/ast/Node.cpp
     src/ast/Ast.cpp
+    src/ast/SupportNodes.cpp
     src/ast/expression/ExpressionNode.cpp
     src/ast/expression/Expressions.cpp
     src/ast/statement/StatementNode.cpp
