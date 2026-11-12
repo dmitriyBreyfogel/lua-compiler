@@ -57,6 +57,9 @@ const Node* Node::child(const std::string& role) const
 
 Node& Node::addChild(std::string role, NodePtr child)
 {
+    if (child != nullptr) {
+        onChildAdded(role, *child);
+    }
     children_.push_back({std::move(role), std::move(child)});
     return *this;
 }
@@ -64,6 +67,10 @@ Node& Node::addChild(std::string role, NodePtr child)
 Node& Node::addChild(std::string role, Node* child)
 {
     return addChild(std::move(role), NodePtr(child));
+}
+
+void Node::onChildAdded(const std::string&, Node&)
+{
 }
 
 const char* nodeTypeName(NodeType type)

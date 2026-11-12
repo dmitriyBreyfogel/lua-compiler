@@ -4,11 +4,19 @@
 
 namespace lua::ast {
 
+class ExpressionNode;
+
 class WhileStatement : public LoopStatement {
 public:
     WhileStatement();
 
-    const Node* condition() const { return child("condition"); }
+    const ExpressionNode* condition() const { return condition_; }
+
+protected:
+    void onChildAdded(const std::string& role, Node& child) override;
+
+private:
+    ExpressionNode* condition_ = nullptr;
 };
 
 } // namespace lua::ast

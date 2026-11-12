@@ -52,6 +52,14 @@ int main()
 
     NodePtr loop = makeNode(NodeType::NumericForStatement);
     assert(dynamic_cast<NumericForStatement*>(loop.get()) != nullptr);
+    loop->addChild("variable", makeNode(NodeType::Identifier, "index"));
+    loop->addChild("start", makeNode(NodeType::IntegerLiteral, "1"));
+    loop->addChild("finish", makeNode(NodeType::IntegerLiteral, "3"));
+    loop->addChild("body", makeNode(NodeType::Block));
+    const auto* numericLoop = static_cast<const NumericForStatement*>(loop.get());
+    assert(numericLoop->variable()->value() == "index");
+    assert(numericLoop->start()->value() == "1");
+    assert(numericLoop->body() != nullptr);
 
     NodePtr genericLoop = makeNode(NodeType::GenericForStatement);
     assert(dynamic_cast<GenericForStatement*>(genericLoop.get()) != nullptr);

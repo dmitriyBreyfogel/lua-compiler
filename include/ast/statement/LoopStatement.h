@@ -4,12 +4,18 @@
 
 namespace lua::ast {
 
+class BlockStatement;
+
 class LoopStatement : public StatementNode {
 public:
-    const Node* body() const { return child("body"); }
+    const BlockStatement* body() const { return body_; }
 
 protected:
     explicit LoopStatement(NodeType type);
+    void onChildAdded(const std::string& role, Node& child) override;
+
+private:
+    BlockStatement* body_ = nullptr;
 };
 
 } // namespace lua::ast

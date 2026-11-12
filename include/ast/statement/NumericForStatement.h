@@ -4,14 +4,25 @@
 
 namespace lua::ast {
 
+class ExpressionNode;
+
 class NumericForStatement : public LoopStatement {
 public:
     NumericForStatement();
 
-    const Node* variable() const { return child("variable"); }
-    const Node* start() const { return child("start"); }
-    const Node* finish() const { return child("finish"); }
-    const Node* step() const { return child("step"); }
+    const ExpressionNode* variable() const { return variable_; }
+    const ExpressionNode* start() const { return start_; }
+    const ExpressionNode* finish() const { return finish_; }
+    const ExpressionNode* step() const { return step_; }
+
+protected:
+    void onChildAdded(const std::string& role, Node& child) override;
+
+private:
+    ExpressionNode* variable_ = nullptr;
+    ExpressionNode* start_ = nullptr;
+    ExpressionNode* finish_ = nullptr;
+    ExpressionNode* step_ = nullptr;
 };
 
 } // namespace lua::ast

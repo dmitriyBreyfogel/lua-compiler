@@ -4,13 +4,24 @@
 
 namespace lua::ast {
 
+class BlockStatement;
+class ListNode;
+
 class IfStatement : public ConditionalStatement {
 public:
     IfStatement();
 
-    const Node* thenBlock() const { return child("then"); }
-    const Node* elseIfBranches() const { return child("elseif"); }
-    const Node* elseBlock() const { return child("else"); }
+    const BlockStatement* thenBlock() const { return thenBlock_; }
+    const ListNode* elseIfBranches() const { return elseIfBranches_; }
+    const BlockStatement* elseBlock() const { return elseBlock_; }
+
+protected:
+    void onChildAdded(const std::string& role, Node& child) override;
+
+private:
+    BlockStatement* thenBlock_ = nullptr;
+    ListNode* elseIfBranches_ = nullptr;
+    BlockStatement* elseBlock_ = nullptr;
 };
 
 } // namespace lua::ast

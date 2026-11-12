@@ -71,6 +71,7 @@ public:
 
 protected:
     Node(NodeType type, std::string value = {});
+    virtual void onChildAdded(const std::string& role, Node& child);
 
 private:
     std::uint64_t id_;

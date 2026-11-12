@@ -4,11 +4,19 @@
 
 namespace lua::ast {
 
+class ExpressionNode;
+
 class FunctionCallStatement : public StatementNode {
 public:
     FunctionCallStatement();
 
-    const Node* call() const { return child("call"); }
+    const ExpressionNode* call() const { return call_; }
+
+protected:
+    void onChildAdded(const std::string& role, Node& child) override;
+
+private:
+    ExpressionNode* call_ = nullptr;
 };
 
 } // namespace lua::ast
