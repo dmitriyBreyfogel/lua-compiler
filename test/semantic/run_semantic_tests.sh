@@ -38,6 +38,7 @@ expect_error() {
 expect_success test/semantic/valid/local_function.lua
 expect_success test/semantic/valid/named_vararg.lua
 expect_success test/semantic/valid/method_self.lua
+expect_success test/semantic/valid/repeat_scope.lua
 expect_error test/semantic/invalid/break_outside_loop.lua "break outside loop"
 expect_error test/semantic/invalid/vararg_outside_function.lua "vararg outside function"
 expect_error test/semantic/invalid/unknown_label.lua "unknown label: missing"
@@ -46,6 +47,7 @@ expect_error test/semantic/invalid/goto_into_local_scope.lua "goto jumps into sc
 expect_error test/semantic/invalid/assign_const.lua "assignment to read-only variable: value"
 expect_error test/semantic/invalid/unknown_attribute.lua "unknown local attribute: unknown"
 expect_error test/semantic/invalid/duplicate_parameter.lua "duplicate declaration: value"
+expect_error test/semantic/invalid/goto_outer_function_label.lua "unknown label: outside"
 
 if [ "$failures" -ne 0 ]; then
     echo "FAILED: $failures semantic test(s)" >&2

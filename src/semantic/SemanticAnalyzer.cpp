@@ -156,8 +156,9 @@ private:
             break;
         case NodeType::RepeatStatement:
             ++loopDepth_;
-            visitNode(child(node, "body"));
+            visitRepeatBody(*child(node, "body"));
             visitNode(child(node, "condition"));
+            finishRepeatBody();
             --loopDepth_;
             break;
         case NodeType::IfStatement:
@@ -202,6 +203,20 @@ private:
         if (node != nullptr) {
             visit(*node);
         }
+    }
+
+    void visitRepeatBody(const Node& block)
+    {
+        pushScope();
+        const Node* statements = child(block, "statements");
+        declareLabels(statements);
+        visitList(statements);
+        visitNode(child(block, "return"));
+    }
+
+    void finishRepeatBody()
+    {
+        scopes_.pop_back();
     }
 
     void visitFunctionDeclaration(const Node& node)
@@ -342,6 +357,9 @@ private:
     void resolveLabel(const Node& node)
     {
         for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
+            if (scope->functionDepth < functionDepth_) {
+                break;
+            }
             const auto found = scope->labels.find(node.value());
             if (found != scope->labels.end()) {
                 if (scope == scopes_.rbegin() && found->second.localCount > scope->localCount) {
