@@ -16,13 +16,14 @@ void yyerror(const char* message)
 namespace {
 
 using lua::ast::Node;
-using lua::ast::NodePtr;
 using lua::ast::NodeType;
 
-Node* makeNode(NodeType type, std::string value = {})
+Node* parserNode(NodeType type, std::string value = {})
 {
     return lua::ast::makeNode(type, std::move(value)).release();
 }
+
+#define makeNode parserNode
 
 Node* makeList()
 {
@@ -131,7 +132,7 @@ std::string takeText(char* text)
 block: st_list_em finish_st {
     $$ = add(makeNode(NodeType::Block), "statements", $1);
     add($$, "return", $2);
-    lua::ast::setParsedBlock(NodePtr($$));
+    lua::ast::setParsedBlock($$);
 }
 ;
 
@@ -307,7 +308,7 @@ function_call: variable args { $$ = add(makeNode(NodeType::CallExpression), "fun
 |   function_call args { $$ = add(makeNode(NodeType::CallExpression), "function", $1); add($$, "arguments", $2); }
 |   function_call ':' ID args { $$ = add(makeNode(NodeType::MethodCallExpression, takeText($3)), "object", $1); add($$, "arguments", $4); }
 |   '(' expr ')' args { $$ = add(makeNode(NodeType::CallExpression), "function", $2); add($$, "arguments", $4); }
-|   '(' expr ')' ':' ID args { $$ = add(makeNode(NodeType::MethodCallExpression, takeText($4)), "object", $2); add($$, "arguments", $5); }
+|   '(' expr ')' ':' ID args { $$ = add(makeNode(NodeType::MethodCallExpression, takeText($5)), "object", $2); add($$, "arguments", $6); }
 ;
 
 /* Одно или несколько выражений через запятую */

@@ -1,28 +1,28 @@
 #include "ast/ParseResult.h"
 
-#include <utility>
-
 namespace lua::ast {
 
 namespace {
 
-NodePtr parsedBlock;
+Node* parsedBlock = nullptr;
 
 }
 
-void setParsedBlock(NodePtr block)
+void setParsedBlock(Node* block)
 {
-    parsedBlock = std::move(block);
+    parsedBlock = block;
 }
 
 NodePtr takeParsedBlock()
 {
-    return std::move(parsedBlock);
+    NodePtr block(parsedBlock);
+    parsedBlock = nullptr;
+    return block;
 }
 
 void clearParsedBlock()
 {
-    parsedBlock.reset();
+    parsedBlock = nullptr;
 }
 
 } // namespace lua::ast
