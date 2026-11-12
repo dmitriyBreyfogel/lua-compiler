@@ -1,5 +1,4 @@
 #include <fstream>
-#include <fstream>
 #include <iostream>
 #include <streambuf>
 #include <string>
@@ -7,6 +6,7 @@
 #include <FlexLexer.h>
 #include "ast/DotWriter.h"
 #include "ast/ParseResult.h"
+#include "ast/AstValidator.h"
 #include "lua_parser.hpp"
 #include "semantic/SemanticAnalyzer.h"
 #include "semantic/SemanticDotWriter.h"
@@ -59,6 +59,14 @@ int main(int argc, char* argv[])
         auto block = lua::ast::takeParsedBlock();
         lua::semantic::SemanticTransformer transformer;
         transformer.normalize(*block);
+        lua::ast::AstValidator validator;
+        const lua::ast::AstValidationResult validationResult = validator.validate(*block);
+        if (!validationResult.isValid()) {
+            for (const lua::ast::AstDiagnostic& diagnostic : validationResult.diagnostics()) {
+                std::cerr << "AST error: " << diagnostic.message << std::endl;
+            }
+            return 1;
+        }
         lua::semantic::SemanticAnalyzer analyzer;
         const lua::semantic::SemanticResult semanticResult = analyzer.analyze(*block);
 

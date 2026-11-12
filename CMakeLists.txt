@@ -54,6 +54,7 @@ add_custom_command(
 add_library(lua_ast
     src/ast/Node.cpp
     src/ast/Ast.cpp
+    src/ast/AstValidator.cpp
     src/ast/SupportNodes.cpp
     src/ast/expression/ExpressionNode.cpp
     src/ast/expression/Expressions.cpp
@@ -104,6 +105,10 @@ if(BUILD_TESTING)
     )
     target_link_libraries(ast_node_factory_test PRIVATE lua_ast)
     add_test(NAME ast_node_factory COMMAND ast_node_factory_test)
+
+    add_executable(ast_validator_test test/ast/ast_validator_test.cpp)
+    target_link_libraries(ast_validator_test PRIVATE lua_ast)
+    add_test(NAME ast_validator COMMAND ast_validator_test)
 
     add_executable(semantic_analyzer_test test/semantic/semantic_analyzer_test.cpp)
     target_link_libraries(semantic_analyzer_test PRIVATE lua_ast)
