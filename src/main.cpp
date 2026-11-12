@@ -9,6 +9,7 @@
 #include "ast/ParseResult.h"
 #include "lua_parser.hpp"
 #include "semantic/SemanticAnalyzer.h"
+#include "semantic/SemanticDotWriter.h"
 
 namespace {
 
@@ -32,8 +33,9 @@ int yylex()
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2 && (argc != 4 || std::string(argv[2]) != "--ast-dot")) {
-        std::cerr << "Usage: " << argv[0] << " <file> [--ast-dot <output.dot>]" << std::endl;
+    const bool writesDot = argc == 4 && (std::string(argv[2]) == "--ast-dot" || std::string(argv[2]) == "--semantic-dot");
+    if (argc != 2 && !writesDot) {
+        std::cerr << "Usage: " << argv[0] << " <file> [--ast-dot|--semantic-dot <output.dot>]" << std::endl;
         return 1;
     }
 
@@ -66,14 +68,18 @@ int main(int argc, char* argv[])
 
         std::cout << "Syntax is correct\n";
 
-        if (argc == 4) {
+        if (writesDot) {
             std::ofstream output(argv[3]);
             if (!output.is_open()) {
                 std::cerr << "Unable to open output file: " << argv[3] << std::endl;
                 return 1;
             }
 
-            lua::ast::DotWriter::writeTree(output, *block, "ast");
+            if (std::string(argv[2]) == "--semantic-dot") {
+                lua::semantic::SemanticDotWriter::writeTree(output, *block, semanticResult);
+            } else {
+                lua::ast::DotWriter::writeTree(output, *block, "ast");
+            }
         }
     }
 

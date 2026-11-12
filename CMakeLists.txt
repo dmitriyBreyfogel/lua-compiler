@@ -56,6 +56,7 @@ add_library(lua_ast
     src/ast/DotWriter.cpp
     src/ast/ParseResult.cpp
     src/semantic/SemanticAnalyzer.cpp
+    src/semantic/SemanticDotWriter.cpp
 )
 target_include_directories(lua_ast PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
