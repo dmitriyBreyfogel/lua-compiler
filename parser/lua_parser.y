@@ -140,7 +140,7 @@ block: st_list_em finish_st {
 st: ';' { $$ = makeNode(NodeType::EmptyStatement); }
 |   BREAK { $$ = makeNode(NodeType::BreakStatement); }
 |   FUNCTION func_name '(' par_list_em ')' block END {
-        $$ = add(makeNode(NodeType::FunctionDeclaration, "global"), "name", $2);
+        $$ = add(makeNode(NodeType::FunctionDeclaration, "implicit"), "name", $2);
         add($$, "parameters", $4); add($$, "body", $6);
     }
 |   LOCAL FUNCTION ID '(' par_list_em ')' block END {
@@ -271,7 +271,7 @@ att_name_list: attrib_em ID attrib_em {
         add(name, "after", $3); $$ = append(makeList(), name);
     }
 |   att_name_list ',' ID attrib_em {
-        Node* name = add(makeNode(NodeType::DeclarationName, takeText($3)), "attribute", $4);
+        Node* name = add(makeNode(NodeType::DeclarationName, takeText($3)), "after", $4);
         $$ = append($1, name);
     }
 ;

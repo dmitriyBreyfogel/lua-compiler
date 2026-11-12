@@ -53,7 +53,7 @@ private:
         for (const ast::Child& item : statements->children()) {
             const Node& statement = *item.node;
             if (statement.type() == NodeType::LabelStatement) {
-                if (scopes_.back().hasLabel(statement.value())) {
+                if (hasVisibleLabel(statement.value())) {
                     error(statement, "duplicate label: " + statement.value());
                 } else {
                     const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement.id(), false);
@@ -92,6 +92,7 @@ private:
             visitDeclaration(static_cast<const ast::GlobalDeclarationStatement&>(node), SymbolType::Global, false);
             break;
         case NodeType::GlobalAllDeclaration:
+            visitGlobalAll(static_cast<const ast::GlobalAllDeclarationStatement&>(node));
             break;
         case NodeType::AssignmentStatement:
             visitAssignment(static_cast<const ast::AssignmentStatement&>(node));
@@ -152,6 +153,13 @@ private:
 
     void visitDeclaration(const ast::DeclarationStatement& declaration, SymbolType type, bool valuesBeforeNames)
     {
+        if (type == SymbolType::Global) {
+            visitList(declaration.values());
+            scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitOnly);
+            declareNames(declaration.names(), type);
+            return;
+        }
+
         if (valuesBeforeNames) {
             visitList(declaration.values());
             declareNames(declaration.names(), type);
@@ -160,6 +168,25 @@ private:
 
         declareNames(declaration.names(), type);
         visitList(declaration.values());
+    }
+
+    void visitGlobalAll(const ast::GlobalAllDeclarationStatement& declaration)
+    {
+        const Node* attribute = declaration.attribute();
+        if (attribute == nullptr) {
+            scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitWritable);
+            return;
+        }
+
+        if (attribute->value() == "const") {
+            scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitReadOnly);
+        } else if (attribute->value() == "close") {
+            error(*attribute, "close attribute is only allowed for local declarations");
+            scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitOnly);
+        } else {
+            error(*attribute, "unknown local attribute: " + attribute->value());
+            scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitOnly);
+        }
     }
 
     void visitAssignment(const ast::AssignmentStatement& assignment)
@@ -174,7 +201,7 @@ private:
         visitNode(loop.finish());
         visitNode(loop.step());
         pushScope();
-        declareNode(*loop.variable(), SymbolType::LoopVariable);
+        declareNode(*loop.variable(), SymbolType::LoopVariable, true);
         ++loopDepth_;
         visitNode(loop.body());
         --loopDepth_;
@@ -252,7 +279,11 @@ private:
         const auto& declaration = static_cast<const ast::FunctionDeclarationStatement&>(node);
         const Node* name = declaration.name();
         if (name != nullptr && name->type() == NodeType::Identifier) {
-            declareNode(*name, node.value() == "local" ? SymbolType::Local : SymbolType::Global);
+            const SymbolType type = node.value() == "local" ? SymbolType::Local : SymbolType::Global;
+            if (node.value() == "global") {
+                scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitOnly);
+            }
+            declareNode(*name, type, false);
         } else {
             visitNode(name);
         }
@@ -282,10 +313,10 @@ private:
                 if (item.node->type() == NodeType::VarargExpression) {
                     acceptsVararg = true;
                     if (!item.node->value().empty()) {
-                        declareNode(*item.node, SymbolType::Parameter);
+                        declareNode(*item.node, SymbolType::Parameter, false);
                     }
                 } else {
-                    declareNode(*item.node, SymbolType::Parameter);
+                    declareNode(*item.node, SymbolType::Parameter, false);
                 }
             }
         }
@@ -308,20 +339,50 @@ private:
         if (names == nullptr) {
             return;
         }
+
+        const Node* commonAttribute = nullptr;
+        if (!names->children().empty()) {
+            commonAttribute = names->children().front().node->child("before");
+        }
+
+        int closeCount = 0;
         for (const ast::Child& item : names->children()) {
-            declareNode(*item.node, type);
+            bool readOnly = type == SymbolType::LoopVariable;
+            readOnly = validateAttribute(commonAttribute, type, closeCount) || readOnly;
+            readOnly = validateAttribute(item.node->child("after"), type, closeCount) || readOnly;
+            declareNode(*item.node, type, readOnly);
         }
     }
 
-    void declareNode(const Node& node, SymbolType type)
+    bool validateAttribute(const Node* attribute, SymbolType type, int& closeCount)
+    {
+        if (attribute == nullptr) {
+            return false;
+        }
+        if (attribute->value() == "const") {
+            return true;
+        }
+        if (attribute->value() == "close") {
+            if (type != SymbolType::Local) {
+                error(*attribute, "close attribute is only allowed for local declarations");
+            }
+            if (++closeCount > 1) {
+                error(*attribute, "only one close attribute is allowed in a declaration");
+            }
+            return true;
+        }
+        error(*attribute, "unknown local attribute: " + attribute->value());
+        return false;
+    }
+
+    void declareNode(const Node& node, SymbolType type, bool readOnly)
     {
         const std::string& name = node.value();
-        Scope& scope = type == SymbolType::Global ? scopes_.front() : scopes_.back();
+        Scope& scope = scopes_.back();
         if ((type == SymbolType::Parameter || type == SymbolType::LoopVariable) && scope.hasName(name)) {
             error(node, "duplicate declaration: " + name);
             return;
         }
-        const bool readOnly = type == SymbolType::LoopVariable || isReadOnly(node);
         const std::uint64_t id = declare(name, type, node.id(), readOnly);
         scope.defineName(name, id);
         if (type == SymbolType::Local) {
@@ -335,20 +396,6 @@ private:
         const std::uint64_t id = result_.symbols_.size() + 1;
         result_.symbols_.push_back({id, name, type, declarationId, readOnly});
         return id;
-    }
-
-    bool isReadOnly(const Node& node)
-    {
-        for (const ast::Child& child : node.children()) {
-            if (child.node->type() != NodeType::Attribute) {
-                continue;
-            }
-            if (child.node->value() == "const" || child.node->value() == "close") {
-                return true;
-            }
-            error(*child.node, "unknown local attribute: " + child.node->value());
-        }
-        return false;
     }
 
     void visitAssignmentTargets(const Node* targets)
@@ -382,14 +429,16 @@ private:
             }
         }
 
-        Scope& global = scopes_.front();
-        const std::uint64_t symbolId = global.findName(name);
-        if (symbolId != 0) {
-            return symbolId;
+        Scope& scope = scopes_.back();
+        const FreeGlobalPolicy policy = scope.freeGlobalPolicy();
+        if (policy == FreeGlobalPolicy::ExplicitOnly) {
+            error(node, "unknown global: " + name);
+            return 0;
         }
 
-        const std::uint64_t id = declare(name, SymbolType::Global, node.id(), false);
-        global.defineName(name, id);
+        const bool readOnly = policy == FreeGlobalPolicy::ExplicitReadOnly;
+        const std::uint64_t id = declare(name, SymbolType::Global, node.id(), readOnly);
+        scope.defineName(name, id);
         return id;
     }
 
@@ -424,7 +473,23 @@ private:
 
     void pushScope()
     {
-        scopes_.emplace_back(functionDepth_);
+        const FreeGlobalPolicy policy = scopes_.empty()
+            ? FreeGlobalPolicy::ImplicitWritable
+            : scopes_.back().freeGlobalPolicy();
+        scopes_.emplace_back(functionDepth_, policy);
+    }
+
+    bool hasVisibleLabel(const std::string& name) const
+    {
+        for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
+            if (scope->functionDepth() < functionDepth_) {
+                break;
+            }
+            if (scope->hasLabel(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     SemanticResult result_;

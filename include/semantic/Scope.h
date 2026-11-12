@@ -6,6 +6,13 @@
 
 namespace lua::semantic {
 
+enum class FreeGlobalPolicy {
+    ImplicitWritable,
+    ExplicitOnly,
+    ExplicitWritable,
+    ExplicitReadOnly,
+};
+
 struct LabelTarget {
     std::uint64_t symbolId;
     int localCount;
@@ -13,11 +20,13 @@ struct LabelTarget {
 
 class Scope {
 public:
-    explicit Scope(int functionDepth);
+    Scope(int functionDepth, FreeGlobalPolicy freeGlobalPolicy);
 
     int functionDepth() const;
     int localCount() const;
+    FreeGlobalPolicy freeGlobalPolicy() const;
     void addLocal();
+    void setFreeGlobalPolicy(FreeGlobalPolicy policy);
 
     bool hasName(const std::string& name) const;
     void defineName(std::string name, std::uint64_t symbolId);
@@ -32,6 +41,7 @@ private:
     std::unordered_map<std::string, LabelTarget> labels_;
     int localCount_ = 0;
     int functionDepth_;
+    FreeGlobalPolicy freeGlobalPolicy_;
 };
 
 } // namespace lua::semantic

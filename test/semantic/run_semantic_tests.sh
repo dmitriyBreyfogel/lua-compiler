@@ -52,6 +52,12 @@ expect_error test/semantic/invalid/goto_outer_function_label.lua "unknown label:
 expect_error test/semantic/invalid/break_in_nested_function.lua "break outside loop"
 expect_error test/semantic/invalid/vararg_in_nested_function.lua "vararg outside function"
 expect_error test/semantic/invalid/goto_from_nested_block_into_local_scope.lua "goto jumps into scope of local variable: ready"
+expect_error test/semantic/invalid/goto_duplicate_outer_label.lua "duplicate label: again"
+expect_error test/semantic/invalid/global_undeclared_name.lua "unknown global: unknown"
+expect_error test/semantic/invalid/global_const_all_assignment.lua "assignment to read-only variable: value"
+expect_error test/semantic/invalid/global_close_attribute.lua "close attribute is only allowed for local declarations"
+expect_error test/semantic/invalid/multiple_close_attributes.lua "only one close attribute is allowed in a declaration"
+expect_error test/semantic/invalid/common_const_attribute.lua "assignment to read-only variable: second"
 
 if [ "$failures" -ne 0 ]; then
     echo "FAILED: $failures semantic test(s)" >&2

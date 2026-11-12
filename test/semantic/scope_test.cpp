@@ -4,9 +4,13 @@
 
 int main()
 {
-    lua::semantic::Scope scope(2);
+    lua::semantic::Scope scope(2, lua::semantic::FreeGlobalPolicy::ImplicitWritable);
     assert(scope.functionDepth() == 2);
     assert(scope.localCount() == 0);
+    assert(scope.freeGlobalPolicy() == lua::semantic::FreeGlobalPolicy::ImplicitWritable);
+
+    scope.setFreeGlobalPolicy(lua::semantic::FreeGlobalPolicy::ExplicitReadOnly);
+    assert(scope.freeGlobalPolicy() == lua::semantic::FreeGlobalPolicy::ExplicitReadOnly);
 
     scope.defineName("value", 4);
     scope.addLocal();

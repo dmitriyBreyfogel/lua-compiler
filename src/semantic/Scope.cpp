@@ -4,8 +4,9 @@
 
 namespace lua::semantic {
 
-Scope::Scope(int functionDepth)
+Scope::Scope(int functionDepth, FreeGlobalPolicy freeGlobalPolicy)
     : functionDepth_(functionDepth)
+    , freeGlobalPolicy_(freeGlobalPolicy)
 {
 }
 
@@ -19,9 +20,19 @@ int Scope::localCount() const
     return localCount_;
 }
 
+FreeGlobalPolicy Scope::freeGlobalPolicy() const
+{
+    return freeGlobalPolicy_;
+}
+
 void Scope::addLocal()
 {
     ++localCount_;
+}
+
+void Scope::setFreeGlobalPolicy(FreeGlobalPolicy policy)
+{
+    freeGlobalPolicy_ = policy;
 }
 
 bool Scope::hasName(const std::string& name) const
