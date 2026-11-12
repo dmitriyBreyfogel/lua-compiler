@@ -368,7 +368,7 @@ private:
             }
             const auto found = scope->labels.find(node.value());
             if (found != scope->labels.end()) {
-                if (scope == scopes_.rbegin() && found->second.localCount > scope->localCount) {
+                if (found->second.localCount > scope->localCount) {
                     error(node, "goto jumps into scope of local variable: " + node.value());
                     return;
                 }

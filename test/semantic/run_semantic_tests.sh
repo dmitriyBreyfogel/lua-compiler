@@ -50,6 +50,7 @@ expect_error test/semantic/invalid/duplicate_parameter.lua "duplicate declaratio
 expect_error test/semantic/invalid/goto_outer_function_label.lua "unknown label: outside"
 expect_error test/semantic/invalid/break_in_nested_function.lua "break outside loop"
 expect_error test/semantic/invalid/vararg_in_nested_function.lua "vararg outside function"
+expect_error test/semantic/invalid/goto_from_nested_block_into_local_scope.lua "goto jumps into scope of local variable: ready"
 
 if [ "$failures" -ne 0 ]; then
     echo "FAILED: $failures semantic test(s)" >&2
