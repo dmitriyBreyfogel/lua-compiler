@@ -4,11 +4,6 @@
 
 namespace lua::ast {
 
-class LiteralExpression : public ExpressionNode {
-public:
-    LiteralExpression(NodeType type, std::string value = {});
-};
-
 class IdentifierExpression : public ExpressionNode {
 public:
     explicit IdentifierExpression(std::string name);

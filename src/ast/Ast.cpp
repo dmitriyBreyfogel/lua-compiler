@@ -16,11 +16,15 @@ NodePtr makeNode(NodeType type, std::string value)
     case NodeType::Attribute:
         return std::make_unique<AttributeNode>(std::move(value));
     case NodeType::IntegerLiteral:
+        return std::make_unique<IntegerLiteralExpression>(std::stoll(value));
     case NodeType::FloatLiteral:
+        return std::make_unique<FloatLiteralExpression>(std::stod(value));
     case NodeType::StringLiteral:
+        return std::make_unique<StringLiteralExpression>(std::move(value));
     case NodeType::BooleanLiteral:
+        return std::make_unique<BooleanLiteralExpression>(value == "true");
     case NodeType::NilLiteral:
-        return std::make_unique<LiteralExpression>(type, std::move(value));
+        return std::make_unique<NilLiteralExpression>();
     case NodeType::VarargExpression:
         return std::make_unique<VarargExpression>(std::move(value));
     case NodeType::Identifier:

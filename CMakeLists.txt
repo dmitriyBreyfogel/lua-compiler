@@ -57,6 +57,7 @@ add_library(lua_ast
     src/ast/AstValidator.cpp
     src/ast/SupportNodes.cpp
     src/ast/expression/ExpressionNode.cpp
+    src/ast/expression/LiteralExpressions.cpp
     src/ast/expression/Expressions.cpp
     src/ast/statement/StatementNode.cpp
     src/ast/statement/Statements.cpp

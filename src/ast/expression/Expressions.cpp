@@ -4,11 +4,6 @@
 
 namespace lua::ast {
 
-LiteralExpression::LiteralExpression(NodeType type, std::string value)
-    : ExpressionNode(type, std::move(value))
-{
-}
-
 IdentifierExpression::IdentifierExpression(std::string name)
     : ExpressionNode(NodeType::Identifier, std::move(name))
 {

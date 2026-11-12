@@ -18,6 +18,29 @@ int main()
     assert(binaryExpression->left()->value() == "left");
     assert(binaryExpression->right()->value() == "1");
 
+    NodePtr integer = makeNode(NodeType::IntegerLiteral, "42");
+    const auto* integerLiteral = dynamic_cast<IntegerLiteralExpression*>(integer.get());
+    assert(integerLiteral != nullptr);
+    assert(integerLiteral->integerValue() == 42);
+
+    NodePtr floating = makeNode(NodeType::FloatLiteral, "3.5");
+    const auto* floatLiteral = dynamic_cast<FloatLiteralExpression*>(floating.get());
+    assert(floatLiteral != nullptr);
+    assert(floatLiteral->floatValue() == 3.5);
+
+    NodePtr string = makeNode(NodeType::StringLiteral, "hello");
+    const auto* stringLiteral = dynamic_cast<StringLiteralExpression*>(string.get());
+    assert(stringLiteral != nullptr);
+    assert(stringLiteral->text() == "hello");
+
+    NodePtr boolean = makeNode(NodeType::BooleanLiteral, "true");
+    const auto* booleanLiteral = dynamic_cast<BooleanLiteralExpression*>(boolean.get());
+    assert(booleanLiteral != nullptr);
+    assert(booleanLiteral->booleanValue());
+
+    NodePtr nil = makeNode(NodeType::NilLiteral);
+    assert(dynamic_cast<NilLiteralExpression*>(nil.get()) != nullptr);
+
     NodePtr declaration = makeNode(NodeType::LocalDeclaration);
     assert(dynamic_cast<DeclarationStatement*>(declaration.get()) != nullptr);
 
