@@ -28,6 +28,11 @@ int main()
     auto declaredName = lua::ast::makeNode(lua::ast::NodeType::DeclarationName, "value");
     names->addChild("item[0]", std::move(declaredName));
     declaration->addChild("names", std::move(names));
+    auto values = list();
+    auto initialValue = lua::ast::makeNode(lua::ast::NodeType::Identifier, "value");
+    const lua::ast::Node& initialValueReference = *initialValue;
+    values->addChild("item[0]", std::move(initialValue));
+    declaration->addChild("values", std::move(values));
     statements->addChild("item[0]", std::move(declaration));
 
     auto assignment = lua::ast::makeNode(lua::ast::NodeType::AssignmentStatement);
@@ -58,6 +63,9 @@ int main()
     assert(targetSymbol != nullptr);
     assert(targetSymbol->name == "value");
     assert(targetSymbol->type == lua::semantic::SymbolType::Local);
+    const lua::semantic::Symbol* initialValueSymbol = result.bindingFor(initialValueReference);
+    assert(initialValueSymbol != nullptr);
+    assert(initialValueSymbol->type == lua::semantic::SymbolType::Global);
     assert(result.isUpvalue(capturedReference));
     assert(result.diagnostics().size() == 1);
     assert(result.diagnostics()[0].message == "break outside loop");
