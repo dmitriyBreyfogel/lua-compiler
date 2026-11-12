@@ -48,6 +48,7 @@ expect_error test/semantic/invalid/assign_const.lua "assignment to read-only var
 expect_error test/semantic/invalid/unknown_attribute.lua "unknown local attribute: unknown"
 expect_error test/semantic/invalid/duplicate_parameter.lua "duplicate declaration: value"
 expect_error test/semantic/invalid/goto_outer_function_label.lua "unknown label: outside"
+expect_error test/semantic/invalid/break_in_nested_function.lua "break outside loop"
 
 if [ "$failures" -ne 0 ]; then
     echo "FAILED: $failures semantic test(s)" >&2

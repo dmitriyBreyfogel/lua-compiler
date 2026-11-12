@@ -233,6 +233,8 @@ private:
     void visitFunction(const Node& node)
     {
         ++functionDepth_;
+        const int previousLoopDepth = loopDepth_;
+        loopDepth_ = 0;
         pushScope();
         const Node* name = child(node, "name");
         if (name != nullptr && name->type() == NodeType::FieldExpression && name->value() == "method") {
@@ -262,6 +264,7 @@ private:
             --varargDepth_;
         }
         --functionDepth_;
+        loopDepth_ = previousLoopDepth;
         scopes_.pop_back();
     }
 
