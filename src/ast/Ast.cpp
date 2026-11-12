@@ -54,6 +54,25 @@ NodePtr makeNode(NodeKind kind, std::string value)
 const char* nodeKindName(NodeKind kind) noexcept
 {
     switch (kind) {
+    case NodeKind::Chunk: return "Chunk";
+    case NodeKind::Block: return "Block";
+    case NodeKind::EmptyStatement: return "EmptyStatement";
+    case NodeKind::BreakStatement: return "BreakStatement";
+    case NodeKind::FunctionDeclaration: return "FunctionDeclaration";
+    case NodeKind::LocalDeclaration: return "LocalDeclaration";
+    case NodeKind::GlobalDeclaration: return "GlobalDeclaration";
+    case NodeKind::GlobalAllDeclaration: return "GlobalAllDeclaration";
+    case NodeKind::AssignmentStatement: return "AssignmentStatement";
+    case NodeKind::CallStatement: return "CallStatement";
+    case NodeKind::LabelStatement: return "LabelStatement";
+    case NodeKind::GotoStatement: return "GotoStatement";
+    case NodeKind::IfStatement: return "IfStatement";
+    case NodeKind::ElseIfBranch: return "ElseIfBranch";
+    case NodeKind::NumericForStatement: return "NumericForStatement";
+    case NodeKind::GenericForStatement: return "GenericForStatement";
+    case NodeKind::WhileStatement: return "WhileStatement";
+    case NodeKind::RepeatStatement: return "RepeatStatement";
+    case NodeKind::ReturnStatement: return "ReturnStatement";
     case NodeKind::IntegerLiteral: return "IntegerLiteral";
     case NodeKind::FloatLiteral: return "FloatLiteral";
     case NodeKind::StringLiteral: return "StringLiteral";

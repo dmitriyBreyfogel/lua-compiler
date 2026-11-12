@@ -40,7 +40,7 @@ void writeNode(std::ostream& output, const Node& node)
 
 }
 
-void DotWriter::writeExpression(std::ostream& output, const Node& root, const std::string& graphName)
+void DotWriter::writeTree(std::ostream& output, const Node& root, const std::string& graphName)
 {
     output << "digraph \"" << escapeDot(graphName) << "\" {\n"
            << "  rankdir=TB;\n"
