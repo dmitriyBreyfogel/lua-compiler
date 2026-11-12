@@ -11,7 +11,12 @@ using ast::NodeType;
 
 struct Scope {
     std::unordered_map<std::string, std::uint64_t> names;
-    std::unordered_map<std::string, std::uint64_t> labels;
+    struct Label {
+        std::uint64_t symbolId;
+        int localCount;
+    };
+    std::unordered_map<std::string, Label> labels;
+    int localCount;
     int functionDepth;
 };
 
@@ -68,19 +73,32 @@ private:
             return;
         }
 
+        int localCount = 0;
         for (const ast::Child& item : statements->children()) {
             const Node& statement = *item.node;
-            if (statement.type() != NodeType::LabelStatement) {
-                continue;
+            if (statement.type() == NodeType::LabelStatement) {
+                if (scopes_.back().labels.count(statement.value()) != 0) {
+                    error(statement, "duplicate label: " + statement.value());
+                } else {
+                    const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement);
+                    scopes_.back().labels[statement.value()] = {id, localCount};
+                }
             }
 
-            if (scopes_.back().labels.count(statement.value()) != 0) {
-                error(statement, "duplicate label: " + statement.value());
-                continue;
-            }
-
-            scopes_.back().labels[statement.value()] = declare(statement.value(), SymbolType::Label, statement);
+            localCount += localDeclarations(statement);
         }
+    }
+
+    int localDeclarations(const Node& statement)
+    {
+        if (statement.type() == NodeType::LocalDeclaration) {
+            const Node* names = child(statement, "names");
+            return names == nullptr ? 0 : static_cast<int>(names->children().size());
+        }
+        if (statement.type() == NodeType::FunctionDeclaration && statement.value() == "local") {
+            return 1;
+        }
+        return 0;
     }
 
     void visit(const Node& node)
@@ -239,6 +257,9 @@ private:
         Scope& scope = type == SymbolType::Global ? scopes_.front() : scopes_.back();
         const std::uint64_t id = declare(name, type, node);
         scope.names[name] = id;
+        if (type == SymbolType::Local) {
+            ++scope.localCount;
+        }
         bind(node, id);
     }
 
@@ -279,7 +300,11 @@ private:
         for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
             const auto found = scope->labels.find(node.value());
             if (found != scope->labels.end()) {
-                bind(node, found->second);
+                if (scope == scopes_.rbegin() && found->second.localCount > scope->localCount) {
+                    error(node, "goto jumps into scope of local variable: " + node.value());
+                    return;
+                }
+                bind(node, found->second.symbolId);
                 return;
             }
         }
@@ -298,7 +323,7 @@ private:
 
     void pushScope()
     {
-        scopes_.push_back({{}, {}, functionDepth_});
+        scopes_.push_back({{}, {}, 0, functionDepth_});
     }
 
     SemanticResult result_;
