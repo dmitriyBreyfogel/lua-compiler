@@ -52,6 +52,7 @@ add_custom_command(
 )
 
 add_library(lua_ast
+    src/ast/Node.cpp
     src/ast/Ast.cpp
     src/ast/DotWriter.cpp
     src/ast/ParseResult.cpp
