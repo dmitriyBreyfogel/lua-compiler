@@ -54,25 +54,31 @@ NodePtr makeNode(NodeType type, std::string value)
     case NodeType::FunctionDeclaration:
         return std::make_unique<FunctionDeclarationStatement>(std::move(value));
     case NodeType::LocalDeclaration:
+        return std::make_unique<LocalDeclarationStatement>();
     case NodeType::GlobalDeclaration:
+        return std::make_unique<GlobalDeclarationStatement>();
     case NodeType::GlobalAllDeclaration:
-        return std::make_unique<DeclarationStatement>(type);
+        return std::make_unique<GlobalAllDeclarationStatement>();
     case NodeType::AssignmentStatement:
         return std::make_unique<AssignmentStatement>();
     case NodeType::CallStatement:
-        return std::make_unique<CallStatement>();
+        return std::make_unique<FunctionCallStatement>();
     case NodeType::LabelStatement:
         return std::make_unique<LabelStatement>(std::move(value));
     case NodeType::GotoStatement:
         return std::make_unique<GotoStatement>(std::move(value));
     case NodeType::IfStatement:
+        return std::make_unique<IfStatement>();
     case NodeType::ElseIfBranch:
-        return std::make_unique<BranchStatement>(type);
+        return std::make_unique<ElseIfStatement>();
     case NodeType::NumericForStatement:
+        return std::make_unique<NumericForStatement>();
     case NodeType::GenericForStatement:
+        return std::make_unique<GenericForStatement>();
     case NodeType::WhileStatement:
+        return std::make_unique<WhileStatement>();
     case NodeType::RepeatStatement:
-        return std::make_unique<LoopStatement>(type);
+        return std::make_unique<RepeatStatement>();
     case NodeType::ReturnStatement:
         return std::make_unique<ReturnStatement>();
     }

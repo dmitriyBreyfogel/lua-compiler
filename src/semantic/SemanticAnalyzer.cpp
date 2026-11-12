@@ -69,7 +69,7 @@ private:
     int localDeclarations(const Node& statement)
     {
         if (statement.type() == NodeType::LocalDeclaration) {
-            const auto& declaration = static_cast<const ast::DeclarationStatement&>(statement);
+            const auto& declaration = static_cast<const ast::LocalDeclarationStatement&>(statement);
             const Node* names = declaration.names();
             return names == nullptr ? 0 : static_cast<int>(names->children().size());
         }
@@ -86,10 +86,10 @@ private:
             visitBlock(static_cast<const ast::BlockStatement&>(node), true);
             break;
         case NodeType::LocalDeclaration:
-            visitDeclaration(static_cast<const ast::DeclarationStatement&>(node), SymbolType::Local, true);
+            visitDeclaration(static_cast<const ast::LocalDeclarationStatement&>(node), SymbolType::Local, true);
             break;
         case NodeType::GlobalDeclaration:
-            visitDeclaration(static_cast<const ast::DeclarationStatement&>(node), SymbolType::Global, false);
+            visitDeclaration(static_cast<const ast::GlobalDeclarationStatement&>(node), SymbolType::Global, false);
             break;
         case NodeType::GlobalAllDeclaration:
             break;
@@ -103,20 +103,20 @@ private:
             visitFunction(static_cast<const ast::FunctionExpression&>(node));
             break;
         case NodeType::NumericForStatement:
-            visitNumericFor(static_cast<const ast::LoopStatement&>(node));
+            visitNumericFor(static_cast<const ast::NumericForStatement&>(node));
             break;
         case NodeType::GenericForStatement:
-            visitGenericFor(static_cast<const ast::LoopStatement&>(node));
+            visitGenericFor(static_cast<const ast::GenericForStatement&>(node));
             break;
         case NodeType::WhileStatement:
-            visitWhile(static_cast<const ast::LoopStatement&>(node));
+            visitWhile(static_cast<const ast::WhileStatement&>(node));
             break;
         case NodeType::RepeatStatement:
-            visitRepeat(static_cast<const ast::LoopStatement&>(node));
+            visitRepeat(static_cast<const ast::RepeatStatement&>(node));
             break;
         case NodeType::IfStatement:
         case NodeType::ElseIfBranch:
-            visitBranch(static_cast<const ast::BranchStatement&>(node));
+            visitBranch(static_cast<const ast::ConditionalStatement&>(node));
             break;
         case NodeType::BreakStatement:
             if (loopDepth_ == 0) {
@@ -168,7 +168,7 @@ private:
         visitAssignmentTargets(assignment.targets());
     }
 
-    void visitNumericFor(const ast::LoopStatement& loop)
+    void visitNumericFor(const ast::NumericForStatement& loop)
     {
         visitNode(loop.start());
         visitNode(loop.finish());
@@ -181,7 +181,7 @@ private:
         scopes_.pop_back();
     }
 
-    void visitGenericFor(const ast::LoopStatement& loop)
+    void visitGenericFor(const ast::GenericForStatement& loop)
     {
         visitList(loop.iterators());
         pushScope();
@@ -192,7 +192,7 @@ private:
         scopes_.pop_back();
     }
 
-    void visitWhile(const ast::LoopStatement& loop)
+    void visitWhile(const ast::WhileStatement& loop)
     {
         visitNode(loop.condition());
         ++loopDepth_;
@@ -200,7 +200,7 @@ private:
         --loopDepth_;
     }
 
-    void visitRepeat(const ast::LoopStatement& loop)
+    void visitRepeat(const ast::RepeatStatement& loop)
     {
         ++loopDepth_;
         visitRepeatBody(*loop.body());
@@ -209,18 +209,20 @@ private:
         --loopDepth_;
     }
 
-    void visitBranch(const ast::BranchStatement& branch)
+    void visitBranch(const ast::ConditionalStatement& branch)
     {
         if (branch.type() == NodeType::IfStatement) {
+            const auto& ifStatement = static_cast<const ast::IfStatement&>(branch);
             visitNode(branch.condition());
-            visitNode(branch.thenBlock());
-            visitList(branch.elseIfBranches());
-            visitNode(branch.elseBlock());
+            visitNode(ifStatement.thenBlock());
+            visitList(ifStatement.elseIfBranches());
+            visitNode(ifStatement.elseBlock());
             return;
         }
 
+        const auto& elseIfStatement = static_cast<const ast::ElseIfStatement&>(branch);
         visitNode(branch.condition());
-        visitNode(branch.body());
+        visitNode(elseIfStatement.body());
     }
 
     void visitNode(const Node* node)

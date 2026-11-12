@@ -24,6 +24,21 @@ DeclarationStatement::DeclarationStatement(NodeType type)
 {
 }
 
+LocalDeclarationStatement::LocalDeclarationStatement()
+    : DeclarationStatement(NodeType::LocalDeclaration)
+{
+}
+
+GlobalDeclarationStatement::GlobalDeclarationStatement()
+    : DeclarationStatement(NodeType::GlobalDeclaration)
+{
+}
+
+GlobalAllDeclarationStatement::GlobalAllDeclarationStatement()
+    : DeclarationStatement(NodeType::GlobalAllDeclaration)
+{
+}
+
 AssignmentStatement::AssignmentStatement()
     : StatementNode(NodeType::AssignmentStatement)
 {
@@ -34,7 +49,7 @@ FunctionDeclarationStatement::FunctionDeclarationStatement(std::string scope)
 {
 }
 
-CallStatement::CallStatement()
+FunctionCallStatement::FunctionCallStatement()
     : StatementNode(NodeType::CallStatement)
 {
 }
@@ -49,13 +64,43 @@ GotoStatement::GotoStatement(std::string name)
 {
 }
 
-BranchStatement::BranchStatement(NodeType type)
+ConditionalStatement::ConditionalStatement(NodeType type)
     : StatementNode(type)
+{
+}
+
+IfStatement::IfStatement()
+    : ConditionalStatement(NodeType::IfStatement)
+{
+}
+
+ElseIfStatement::ElseIfStatement()
+    : ConditionalStatement(NodeType::ElseIfBranch)
 {
 }
 
 LoopStatement::LoopStatement(NodeType type)
     : StatementNode(type)
+{
+}
+
+NumericForStatement::NumericForStatement()
+    : LoopStatement(NodeType::NumericForStatement)
+{
+}
+
+GenericForStatement::GenericForStatement()
+    : LoopStatement(NodeType::GenericForStatement)
+{
+}
+
+WhileStatement::WhileStatement()
+    : LoopStatement(NodeType::WhileStatement)
+{
+}
+
+RepeatStatement::RepeatStatement()
+    : LoopStatement(NodeType::RepeatStatement)
 {
 }
 

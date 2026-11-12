@@ -24,10 +24,26 @@ public:
 
 class DeclarationStatement : public StatementNode {
 public:
-    explicit DeclarationStatement(NodeType type);
-
     const Node* names() const { return child("names"); }
     const Node* values() const { return child("values"); }
+
+protected:
+    explicit DeclarationStatement(NodeType type);
+};
+
+class LocalDeclarationStatement : public DeclarationStatement {
+public:
+    LocalDeclarationStatement();
+};
+
+class GlobalDeclarationStatement : public DeclarationStatement {
+public:
+    GlobalDeclarationStatement();
+};
+
+class GlobalAllDeclarationStatement : public DeclarationStatement {
+public:
+    GlobalAllDeclarationStatement();
 };
 
 class AssignmentStatement : public StatementNode {
@@ -47,9 +63,9 @@ public:
     const Node* body() const { return child("body"); }
 };
 
-class CallStatement : public StatementNode {
+class FunctionCallStatement : public StatementNode {
 public:
-    CallStatement();
+    FunctionCallStatement();
 
     const Node* call() const { return child("call"); }
 };
@@ -64,29 +80,68 @@ public:
     explicit GotoStatement(std::string name);
 };
 
-class BranchStatement : public StatementNode {
+class ConditionalStatement : public StatementNode {
 public:
-    explicit BranchStatement(NodeType type);
-
     const Node* condition() const { return child("condition"); }
+
+protected:
+    explicit ConditionalStatement(NodeType type);
+};
+
+class IfStatement : public ConditionalStatement {
+public:
+    IfStatement();
+
     const Node* thenBlock() const { return child("then"); }
     const Node* elseIfBranches() const { return child("elseif"); }
     const Node* elseBlock() const { return child("else"); }
+};
+
+class ElseIfStatement : public ConditionalStatement {
+public:
+    ElseIfStatement();
+
     const Node* body() const { return child("body"); }
 };
 
 class LoopStatement : public StatementNode {
 public:
+    const Node* body() const { return child("body"); }
+
+protected:
     explicit LoopStatement(NodeType type);
+};
+
+class NumericForStatement : public LoopStatement {
+public:
+    NumericForStatement();
 
     const Node* variable() const { return child("variable"); }
-    const Node* names() const { return child("names"); }
     const Node* start() const { return child("start"); }
     const Node* finish() const { return child("finish"); }
     const Node* step() const { return child("step"); }
+};
+
+class GenericForStatement : public LoopStatement {
+public:
+    GenericForStatement();
+
+    const Node* names() const { return child("names"); }
     const Node* iterators() const { return child("iterators"); }
+};
+
+class WhileStatement : public LoopStatement {
+public:
+    WhileStatement();
+
     const Node* condition() const { return child("condition"); }
-    const Node* body() const { return child("body"); }
+};
+
+class RepeatStatement : public LoopStatement {
+public:
+    RepeatStatement();
+
+    const Node* condition() const { return child("condition"); }
 };
 
 class ReturnStatement : public StatementNode {
