@@ -57,7 +57,7 @@ struct Child {
 
 class Node {
 public:
-    Node(NodeType type, std::string value = {});
+    virtual ~Node() = default;
 
     std::uint64_t id() const;
     NodeType type() const;
@@ -67,11 +67,44 @@ public:
     Node& addChild(std::string role, NodePtr child);
     Node& addChild(std::string role, Node* child);
 
+protected:
+    Node(NodeType type, std::string value = {});
+
 private:
     std::uint64_t id_;
     NodeType type_;
     std::string value_;
     std::vector<Child> children_;
+};
+
+class ExpressionNode : public Node {
+public:
+    ExpressionNode(NodeType type, std::string value = {});
+};
+
+class StatementNode : public Node {
+public:
+    StatementNode(NodeType type, std::string value = {});
+};
+
+class BlockNode : public StatementNode {
+public:
+    BlockNode();
+};
+
+class ListNode : public Node {
+public:
+    ListNode();
+};
+
+class DeclarationNameNode : public Node {
+public:
+    explicit DeclarationNameNode(std::string value);
+};
+
+class AttributeNode : public Node {
+public:
+    explicit AttributeNode(std::string value);
 };
 
 NodePtr makeNode(NodeType type, std::string value = {});
