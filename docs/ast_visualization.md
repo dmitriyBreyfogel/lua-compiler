@@ -29,3 +29,11 @@ artifacts/expressions.svg
 ```
 
 Open the SVG in a browser to zoom and inspect the tree. Edge labels describe the role of a child node, such as `left`, `right`, `condition`, `body`, or `arguments`.
+
+To see semantic information, add `--semantic` before the compiler path:
+
+```sh
+sh tools/visualize_ast.sh --semantic ./build/lua_compiler test/semantic/valid/local_function.lua artifacts/local_function_semantic
+```
+
+Semantic SVG files include dashed links from identifiers to symbol nodes. A captured local variable is marked as `upvalue`.

@@ -2,8 +2,17 @@
 
 set -eu
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <lua_compiler> <input.lua> <output-name>" >&2
+if [ "$#" -ne 3 ] && [ "$#" -ne 4 ]; then
+    echo "Usage: $0 [--semantic] <lua_compiler> <input.lua> <output-name>" >&2
+    exit 1
+fi
+
+option="--ast-dot"
+if [ "$1" = "--semantic" ]; then
+    option="--semantic-dot"
+    shift
+elif [ "$#" -ne 3 ]; then
+    echo "Usage: $0 [--semantic] <lua_compiler> <input.lua> <output-name>" >&2
     exit 1
 fi
 
@@ -20,7 +29,7 @@ if ! command -v dot >/dev/null 2>&1; then
     exit 1
 fi
 
-"$compiler" "$input" --ast-dot "$dot_file"
+"$compiler" "$input" "$option" "$dot_file"
 dot -Tsvg "$dot_file" -o "$svg_file"
 
 echo "Created: $dot_file"
