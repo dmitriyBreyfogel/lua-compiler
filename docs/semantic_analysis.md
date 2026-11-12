@@ -17,6 +17,13 @@ The parser creates these classes through `makeNode`. Child-role strings are an
 implementation detail of construction; semantic code uses typed accessors such
 as `LoopStatement::body()` and `BinaryExpression::left()`.
 
+Declarations and control flow are represented by separate concrete classes:
+`LocalDeclarationStatement`, `GlobalDeclarationStatement`,
+`GlobalAllDeclarationStatement`, `IfStatement`, `ElseIfStatement`,
+`NumericForStatement`, `GenericForStatement`, `WhileStatement` and
+`RepeatStatement`. Literals also have separate classes for integer, float,
+string, boolean and nil values.
+
 Before semantic analysis, `AstValidator` checks the root node, required children
 and child categories. `SemanticTransformer` then supplies the omitted `step`
 expression of a numeric `for` loop with literal `1`.
