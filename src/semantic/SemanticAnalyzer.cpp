@@ -234,7 +234,9 @@ private:
     {
         ++functionDepth_;
         const int previousLoopDepth = loopDepth_;
+        const int previousVarargDepth = varargDepth_;
         loopDepth_ = 0;
+        varargDepth_ = 0;
         pushScope();
         const Node* name = child(node, "name");
         if (name != nullptr && name->type() == NodeType::FieldExpression && name->value() == "method") {
@@ -265,6 +267,7 @@ private:
         }
         --functionDepth_;
         loopDepth_ = previousLoopDepth;
+        varargDepth_ = previousVarargDepth;
         scopes_.pop_back();
     }
 
