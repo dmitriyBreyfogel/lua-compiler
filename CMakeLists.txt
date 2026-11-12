@@ -55,6 +55,7 @@ add_library(lua_ast
     src/ast/Ast.cpp
     src/ast/DotWriter.cpp
     src/ast/ParseResult.cpp
+    src/semantic/SemanticAnalyzer.cpp
 )
 target_include_directories(lua_ast PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -88,6 +89,10 @@ if(BUILD_TESTING)
     )
     target_link_libraries(ast_dot_writer_test PRIVATE lua_ast)
     add_test(NAME ast_dot_writer COMMAND ast_dot_writer_test)
+
+    add_executable(semantic_analyzer_test test/semantic/semantic_analyzer_test.cpp)
+    target_link_libraries(semantic_analyzer_test PRIVATE lua_ast)
+    add_test(NAME semantic_analyzer COMMAND semantic_analyzer_test)
 
     add_test(
         NAME ast_dot
