@@ -5,6 +5,8 @@ project(lua_compiler
     LANGUAGES CXX
 )
 
+include(CTest)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -51,6 +53,8 @@ add_custom_command(
 
 add_executable(lua_compiler
     src/main.cpp
+    src/ast/Ast.cpp
+    src/ast/DotWriter.cpp
     "${GENERATED_LEXER_FILE}"
     "${GENERATED_PARSER_FILE}"
 )
@@ -69,3 +73,14 @@ set_source_files_properties(
 
 target_include_directories(lua_compiler PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(lua_lexer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(lua_compiler PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+if(BUILD_TESTING)
+    add_executable(ast_dot_writer_test
+        test/ast/dot_writer_test.cpp
+        src/ast/Ast.cpp
+        src/ast/DotWriter.cpp
+    )
+    target_include_directories(ast_dot_writer_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    add_test(NAME ast_dot_writer COMMAND ast_dot_writer_test)
+endif()
