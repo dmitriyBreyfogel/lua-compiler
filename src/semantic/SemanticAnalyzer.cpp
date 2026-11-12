@@ -224,6 +224,9 @@ private:
             for (const ast::Child& item : parameters->children()) {
                 if (item.node->type() == NodeType::VarargExpression) {
                     acceptsVararg = true;
+                    if (!item.node->value().empty()) {
+                        declareNode(*item.node, SymbolType::Parameter);
+                    }
                 } else {
                     declareNode(*item.node, SymbolType::Parameter);
                 }
@@ -255,6 +258,10 @@ private:
     {
         const std::string& name = node.value();
         Scope& scope = type == SymbolType::Global ? scopes_.front() : scopes_.back();
+        if ((type == SymbolType::Parameter || type == SymbolType::LoopVariable) && scope.names.count(name) != 0) {
+            error(node, "duplicate declaration: " + name);
+            return;
+        }
         const std::uint64_t id = declare(name, type, node);
         scope.names[name] = id;
         if (type == SymbolType::Local) {
