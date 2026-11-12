@@ -56,14 +56,14 @@ struct Child {
     NodePtr node;
 };
 
-class Node final {
+class Node {
 public:
     Node(NodeKind kind, std::string value = {});
 
-    std::uint64_t id() const noexcept;
-    NodeKind kind() const noexcept;
-    const std::string& value() const noexcept;
-    const std::vector<Child>& children() const noexcept;
+    std::uint64_t id() const;
+    NodeKind kind() const;
+    const std::string& value() const;
+    const std::vector<Child>& children() const;
 
     Node& addChild(std::string role, NodePtr child);
     Node& addChild(std::string role, Node* child);
@@ -76,6 +76,6 @@ private:
 };
 
 NodePtr makeNode(NodeKind kind, std::string value = {});
-const char* nodeKindName(NodeKind kind) noexcept;
+const char* nodeKindName(NodeKind kind);
 
 } // namespace lua::ast

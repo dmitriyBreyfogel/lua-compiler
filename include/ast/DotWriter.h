@@ -7,7 +7,7 @@
 
 namespace lua::ast {
 
-class DotWriter final {
+class DotWriter {
 public:
     static void writeTree(std::ostream& output, const Node& root,
                           const std::string& graphName = "ast");

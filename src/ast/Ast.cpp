@@ -15,22 +15,22 @@ Node::Node(NodeKind kind, std::string value)
 {
 }
 
-std::uint64_t Node::id() const noexcept
+std::uint64_t Node::id() const
 {
     return id_;
 }
 
-NodeKind Node::kind() const noexcept
+NodeKind Node::kind() const
 {
     return kind_;
 }
 
-const std::string& Node::value() const noexcept
+const std::string& Node::value() const
 {
     return value_;
 }
 
-const std::vector<Child>& Node::children() const noexcept
+const std::vector<Child>& Node::children() const
 {
     return children_;
 }
@@ -51,7 +51,7 @@ NodePtr makeNode(NodeKind kind, std::string value)
     return std::make_unique<Node>(kind, std::move(value));
 }
 
-const char* nodeKindName(NodeKind kind) noexcept
+const char* nodeKindName(NodeKind kind)
 {
     switch (kind) {
     case NodeKind::Chunk: return "Chunk";
