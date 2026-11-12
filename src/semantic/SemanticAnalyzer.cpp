@@ -158,6 +158,9 @@ private:
         case NodeType::GotoStatement:
             resolveLabel(node);
             break;
+        case NodeType::FieldExpression:
+            visitNode(child(node, "object"));
+            break;
         case NodeType::Identifier:
             bind(node, resolveName(node));
             break;
