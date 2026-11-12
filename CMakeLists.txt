@@ -99,4 +99,10 @@ if(BUILD_TESTING)
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/test/ast/run_ast_dot_tests.sh" $<TARGET_FILE:lua_compiler>
     )
     set_tests_properties(ast_dot PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    add_test(
+        NAME semantic
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/test/semantic/run_semantic_tests.sh" $<TARGET_FILE:lua_compiler>
+    )
+    set_tests_properties(semantic PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
