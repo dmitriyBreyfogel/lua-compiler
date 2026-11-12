@@ -1,6 +1,5 @@
 #include "semantic/SemanticAnalyzer.h"
-
-#include <unordered_map>
+#include "semantic/Scope.h"
 
 namespace lua::semantic {
 
@@ -8,17 +7,6 @@ namespace {
 
 using ast::Node;
 using ast::NodeType;
-
-struct Scope {
-    std::unordered_map<std::string, std::uint64_t> names;
-    struct Label {
-        std::uint64_t symbolId;
-        int localCount;
-    };
-    std::unordered_map<std::string, Label> labels;
-    int localCount;
-    int functionDepth;
-};
 
 class Analyzer {
 public:
@@ -67,11 +55,11 @@ private:
         for (const ast::Child& item : statements->children()) {
             const Node& statement = *item.node;
             if (statement.type() == NodeType::LabelStatement) {
-                if (scopes_.back().labels.count(statement.value()) != 0) {
+                if (scopes_.back().hasLabel(statement.value())) {
                     error(statement, "duplicate label: " + statement.value());
                 } else {
                     const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement.id(), false);
-                    scopes_.back().labels[statement.value()] = {id, localCount};
+                    scopes_.back().defineLabel(statement.value(), {id, localCount});
                     bind(statement, id);
                 }
             }
@@ -286,7 +274,7 @@ private:
         pushScope();
         if (name != nullptr && name->type() == NodeType::FieldExpression && name->value() == "method") {
             declare("self", SymbolType::Parameter, name->id(), false);
-            scopes_.back().names["self"] = result_.symbols_.back().id;
+            scopes_.back().defineName("self", result_.symbols_.back().id);
         }
         bool acceptsVararg = false;
         if (parameters != nullptr) {
@@ -329,14 +317,14 @@ private:
     {
         const std::string& name = node.value();
         Scope& scope = type == SymbolType::Global ? scopes_.front() : scopes_.back();
-        if ((type == SymbolType::Parameter || type == SymbolType::LoopVariable) && scope.names.count(name) != 0) {
+        if ((type == SymbolType::Parameter || type == SymbolType::LoopVariable) && scope.hasName(name)) {
             error(node, "duplicate declaration: " + name);
             return;
         }
         const std::uint64_t id = declare(name, type, node.id(), isReadOnly(node));
-        scope.names[name] = id;
+        scope.defineName(name, id);
         if (type == SymbolType::Local) {
-            ++scope.localCount;
+            scope.addLocal();
         }
         bind(node, id);
     }
@@ -383,40 +371,40 @@ private:
     {
         const std::string& name = node.value();
         for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
-            const auto found = scope->names.find(name);
-            if (found != scope->names.end()) {
-                const Symbol& symbol = result_.symbols_[found->second - 1];
-                if (scope->functionDepth < functionDepth_ && symbol.type != SymbolType::Global) {
+            const std::uint64_t symbolId = scope->findName(name);
+            if (symbolId != 0) {
+                const Symbol& symbol = result_.symbols_[symbolId - 1];
+                if (scope->functionDepth() < functionDepth_ && symbol.type != SymbolType::Global) {
                     result_.upvalues_.insert(node.id());
                 }
-                return found->second;
+                return symbolId;
             }
         }
 
         Scope& global = scopes_.front();
-        const auto found = global.names.find(name);
-        if (found != global.names.end()) {
-            return found->second;
+        const std::uint64_t symbolId = global.findName(name);
+        if (symbolId != 0) {
+            return symbolId;
         }
 
         const std::uint64_t id = declare(name, SymbolType::Global, node.id(), false);
-        global.names[name] = id;
+        global.defineName(name, id);
         return id;
     }
 
     void resolveLabel(const Node& node)
     {
         for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
-            if (scope->functionDepth < functionDepth_) {
+            if (scope->functionDepth() < functionDepth_) {
                 break;
             }
-            const auto found = scope->labels.find(node.value());
-            if (found != scope->labels.end()) {
-                if (found->second.localCount > scope->localCount) {
+            const LabelTarget* label = scope->findLabel(node.value());
+            if (label != nullptr) {
+                if (label->localCount > scope->localCount()) {
                     error(node, "goto jumps into scope of local variable: " + node.value());
                     return;
                 }
-                bind(node, found->second.symbolId);
+                bind(node, label->symbolId);
                 return;
             }
         }
@@ -435,7 +423,7 @@ private:
 
     void pushScope()
     {
-        scopes_.push_back({{}, {}, 0, functionDepth_});
+        scopes_.emplace_back(functionDepth_);
     }
 
     SemanticResult result_;

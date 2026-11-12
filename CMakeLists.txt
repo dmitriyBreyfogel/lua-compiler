@@ -61,6 +61,7 @@ add_library(lua_ast
     src/ast/DotWriter.cpp
     src/ast/ParseResult.cpp
     src/semantic/SemanticAnalyzer.cpp
+    src/semantic/Scope.cpp
     src/semantic/SemanticDotWriter.cpp
     src/semantic/SemanticTransformer.cpp
 )
@@ -106,6 +107,10 @@ if(BUILD_TESTING)
     add_executable(semantic_analyzer_test test/semantic/semantic_analyzer_test.cpp)
     target_link_libraries(semantic_analyzer_test PRIVATE lua_ast)
     add_test(NAME semantic_analyzer COMMAND semantic_analyzer_test)
+
+    add_executable(semantic_scope_test test/semantic/scope_test.cpp)
+    target_link_libraries(semantic_scope_test PRIVATE lua_ast)
+    add_test(NAME semantic_scope COMMAND semantic_scope_test)
 
     add_test(
         NAME ast_dot
