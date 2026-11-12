@@ -1,0 +1,16 @@
+# Operators and their precedence are specified by tree edges, not node IDs.
+node|LocalDeclaration
+node|DeclarationName\nresult
+node|BinaryExpression\n..
+node|BinaryExpression\n+
+node|BinaryExpression\n*
+node|BinaryExpression\n^
+node|UnaryExpression\n-
+node|IntegerLiteral\n1
+node|StringLiteral\nvalue
+edge|BinaryExpression\n..|left|BinaryExpression\n+
+edge|BinaryExpression\n+|left|UnaryExpression\n-
+edge|UnaryExpression\n-|operand|IntegerLiteral\n1
+edge|BinaryExpression\n+|right|BinaryExpression\n*
+edge|BinaryExpression\n*|right|BinaryExpression\n^
+edge|BinaryExpression\n..|right|StringLiteral\nvalue

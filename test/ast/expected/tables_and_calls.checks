@@ -1,0 +1,8 @@
+node|MethodCallExpression\nmethod
+node|TableConstructor
+node|TableField
+node|CallExpression
+node|Identifier\nobject
+node|StringLiteral\nkey
+node|Identifier\nindex
+edge|MethodCallExpression\nmethod|object|Identifier\nobject
