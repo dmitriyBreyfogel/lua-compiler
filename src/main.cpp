@@ -10,6 +10,7 @@
 #include "lua_parser.hpp"
 #include "semantic/SemanticAnalyzer.h"
 #include "semantic/SemanticDotWriter.h"
+#include "semantic/SemanticTransformer.h"
 
 namespace {
 
@@ -56,6 +57,8 @@ int main(int argc, char* argv[])
 
     if (parseStatus == 0) {
         auto block = lua::ast::takeParsedBlock();
+        lua::semantic::SemanticTransformer transformer;
+        transformer.normalize(*block);
         lua::semantic::SemanticAnalyzer analyzer;
         const lua::semantic::SemanticResult semanticResult = analyzer.analyze(*block);
 

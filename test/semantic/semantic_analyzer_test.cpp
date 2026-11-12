@@ -2,6 +2,7 @@
 
 #include "ast/Ast.h"
 #include "semantic/SemanticAnalyzer.h"
+#include "semantic/SemanticTransformer.h"
 
 namespace {
 
@@ -21,6 +22,13 @@ lua::ast::NodePtr block(lua::ast::NodePtr statements)
 
 int main()
 {
+    auto forLoop = lua::ast::makeNode(lua::ast::NodeType::NumericForStatement);
+    lua::semantic::SemanticTransformer transformer;
+    transformer.normalize(*forLoop);
+    assert(forLoop->children().size() == 1);
+    assert(forLoop->children()[0].role == "step");
+    assert(forLoop->children()[0].node->value() == "1");
+
     auto statements = list();
 
     auto declaration = lua::ast::makeNode(lua::ast::NodeType::LocalDeclaration);
