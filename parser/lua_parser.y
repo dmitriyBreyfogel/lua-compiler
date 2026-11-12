@@ -239,7 +239,7 @@ repeat_st: REPEAT block UNTIL expr {
 /* Имя объявляемой функции */
 func_name: dotted_name { $$ = $1; }
 |   dotted_name ':' ID {
-    $$ = add(makeNode(NodeType::FieldExpression), "object", $1);
+    $$ = add(makeNode(NodeType::FieldExpression, "method"), "object", $1);
     add($$, "field", makeNode(NodeType::Identifier, takeText($3)));
 }
 ;

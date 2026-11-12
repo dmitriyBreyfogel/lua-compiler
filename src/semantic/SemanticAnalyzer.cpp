@@ -82,6 +82,7 @@ private:
                 } else {
                     const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement);
                     scopes_.back().labels[statement.value()] = {id, localCount};
+                    bind(statement, id);
                 }
             }
 
@@ -218,6 +219,11 @@ private:
     {
         ++functionDepth_;
         pushScope();
+        const Node* name = child(node, "name");
+        if (name != nullptr && name->type() == NodeType::FieldExpression && name->value() == "method") {
+            ast::NodePtr self = ast::makeNode(NodeType::Identifier, "self");
+            declareNode(*self, SymbolType::Parameter);
+        }
         const Node* parameters = child(node, "parameters");
         bool acceptsVararg = false;
         if (parameters != nullptr) {
