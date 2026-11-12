@@ -57,7 +57,7 @@ struct Child {
 
 class Node {
 public:
-    virtual ~Node() = default;
+    Node(NodeType type, std::string value = {});
 
     std::uint64_t id() const;
     NodeType type() const;
@@ -70,16 +70,13 @@ public:
     Node& addChild(std::string role, Node* child);
 
 protected:
-    Node(NodeType type, std::string value = {});
-    virtual void onChildAdded(const std::string& role, Node& child);
-
-private:
     std::uint64_t id_;
     NodeType type_;
     std::string value_;
     std::vector<Child> children_;
 };
 
+bool isExpression(NodeType type);
 const char* nodeTypeName(NodeType type);
 
 } // namespace lua::ast

@@ -3,26 +3,13 @@
 Semantic analysis starts after parsing and before any future bytecode generation.
 It does not change the approved grammar.
 
-The compiler builds concrete AST nodes in `include/ast`:
+The compiler builds one AST node class from `include/ast/Node.h`. Its `NodeType`
+enum distinguishes blocks, statements, declarations, expressions and literals.
+Every node stores an optional string value and named children.
 
-- `Node.h` owns common identity and children.
-- `expression/` contains expressions: literals, identifiers, calls, tables,
-  unary and binary operations, functions, fields and indexes.
-- `statement/` contains blocks, declarations, assignments, branches, loops,
-  calls, labels, gotos and returns.
-- `SupportNodes.h` contains parser support nodes for lists, declared names and
-  attributes.
-
-The parser creates these classes through `makeNode`. Child-role strings are an
-implementation detail of construction; semantic code uses typed accessors such
-as `LoopStatement::body()` and `BinaryExpression::left()`.
-
-Declarations and control flow are represented by separate concrete classes:
-`LocalDeclarationStatement`, `GlobalDeclarationStatement`,
-`GlobalAllDeclarationStatement`, `IfStatement`, `ElseIfStatement`,
-`NumericForStatement`, `GenericForStatement`, `WhileStatement` and
-`RepeatStatement`. Literals also have separate classes for integer, float,
-string, boolean and nil values.
+The parser creates nodes through `createNode`. Roles such as `"left"`,
+`"condition"` and `"body"` describe the relationship between a node and its
+children. Semantic code reads them with `Node::child`.
 
 Before semantic analysis, `AstValidator` checks the root node, required children
 and child categories. `SemanticTransformer` then supplies the omitted `step`

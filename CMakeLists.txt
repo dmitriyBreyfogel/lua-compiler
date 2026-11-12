@@ -55,32 +55,6 @@ add_library(lua_ast
     src/ast/Node.cpp
     src/ast/Ast.cpp
     src/ast/AstValidator.cpp
-    src/ast/SupportNodes.cpp
-    src/ast/expression/ExpressionNode.cpp
-    src/ast/expression/LiteralExpressions.cpp
-    src/ast/expression/Expressions.cpp
-    src/ast/statement/StatementNode.cpp
-    src/ast/statement/AssignmentStatement.cpp
-    src/ast/statement/BlockStatement.cpp
-    src/ast/statement/BreakStatement.cpp
-    src/ast/statement/ConditionalStatement.cpp
-    src/ast/statement/DeclarationStatement.cpp
-    src/ast/statement/ElseIfStatement.cpp
-    src/ast/statement/EmptyStatement.cpp
-    src/ast/statement/FunctionCallStatement.cpp
-    src/ast/statement/FunctionDeclarationStatement.cpp
-    src/ast/statement/GenericForStatement.cpp
-    src/ast/statement/GlobalAllDeclarationStatement.cpp
-    src/ast/statement/GlobalDeclarationStatement.cpp
-    src/ast/statement/GotoStatement.cpp
-    src/ast/statement/IfStatement.cpp
-    src/ast/statement/LabelStatement.cpp
-    src/ast/statement/LocalDeclarationStatement.cpp
-    src/ast/statement/LoopStatement.cpp
-    src/ast/statement/NumericForStatement.cpp
-    src/ast/statement/RepeatStatement.cpp
-    src/ast/statement/ReturnStatement.cpp
-    src/ast/statement/WhileStatement.cpp
     src/ast/DotWriter.cpp
     src/ast/ParseResult.cpp
     src/semantic/SemanticAnalyzer.cpp

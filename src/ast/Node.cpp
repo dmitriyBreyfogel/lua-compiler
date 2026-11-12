@@ -57,9 +57,6 @@ const Node* Node::child(const std::string& role) const
 
 Node& Node::addChild(std::string role, NodePtr child)
 {
-    if (child != nullptr) {
-        onChildAdded(role, *child);
-    }
     children_.push_back({std::move(role), std::move(child)});
     return *this;
 }
@@ -69,8 +66,28 @@ Node& Node::addChild(std::string role, Node* child)
     return addChild(std::move(role), NodePtr(child));
 }
 
-void Node::onChildAdded(const std::string&, Node&)
+bool isExpression(NodeType type)
 {
+    switch (type) {
+    case NodeType::IntegerLiteral:
+    case NodeType::FloatLiteral:
+    case NodeType::StringLiteral:
+    case NodeType::BooleanLiteral:
+    case NodeType::NilLiteral:
+    case NodeType::VarargExpression:
+    case NodeType::Identifier:
+    case NodeType::UnaryExpression:
+    case NodeType::BinaryExpression:
+    case NodeType::IndexExpression:
+    case NodeType::FieldExpression:
+    case NodeType::CallExpression:
+    case NodeType::MethodCallExpression:
+    case NodeType::TableConstructor:
+    case NodeType::FunctionExpression:
+        return true;
+    default:
+        return false;
+    }
 }
 
 const char* nodeTypeName(NodeType type)

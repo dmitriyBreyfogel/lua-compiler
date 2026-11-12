@@ -39,7 +39,7 @@ private:
     void expectExpression(const Node& node, const std::string& role)
     {
         const Node* value = required(node, role);
-        if (value != nullptr && dynamic_cast<const ExpressionNode*>(value) == nullptr) {
+        if (value != nullptr && !isExpression(value->type())) {
             error(node, "child must be expression: " + role);
         }
     }

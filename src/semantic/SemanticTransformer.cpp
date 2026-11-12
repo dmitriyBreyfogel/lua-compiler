@@ -7,9 +7,8 @@ namespace {
 void normalizeNode(ast::Node& node)
 {
     if (node.type() == ast::NodeType::NumericForStatement) {
-        auto& loop = static_cast<ast::NumericForStatement&>(node);
-        if (loop.step() == nullptr) {
-            loop.addChild("step", ast::makeNode(ast::NodeType::IntegerLiteral, "1"));
+        if (node.child("step") == nullptr) {
+            node.addChild("step", ast::createNode(ast::NodeType::IntegerLiteral, "1"));
         }
     }
 

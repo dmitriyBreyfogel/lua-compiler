@@ -11,7 +11,7 @@ public:
     SemanticResult run(const Node& block)
     {
         pushScope();
-        visitBlock(static_cast<const ast::BlockStatement&>(block), false);
+        visitBlock(block, false);
         return std::move(result_);
     }
 
@@ -27,16 +27,16 @@ private:
         }
     }
 
-    void visitBlock(const ast::BlockStatement& block, bool createScope)
+    void visitBlock(const Node& block, bool createScope)
     {
         if (createScope) {
             pushScope();
         }
 
-        const Node* statements = block.statements();
+        const Node* statements = block.child("statements");
         declareLabels(statements);
         visitList(statements);
-        visitNode(block.returnStatement());
+        visitNode(block.child("return"));
 
         if (createScope) {
             scopes_.pop_back();
@@ -69,8 +69,7 @@ private:
     int localDeclarations(const Node& statement)
     {
         if (statement.type() == NodeType::LocalDeclaration) {
-            const auto& declaration = static_cast<const ast::LocalDeclarationStatement&>(statement);
-            const Node* names = declaration.names();
+            const Node* names = statement.child("names");
             return names == nullptr ? 0 : static_cast<int>(names->children().size());
         }
         if (statement.type() == NodeType::FunctionDeclaration && statement.value() == "local") {
@@ -83,41 +82,41 @@ private:
     {
         switch (node.type()) {
         case NodeType::Block:
-            visitBlock(static_cast<const ast::BlockStatement&>(node), true);
+            visitBlock(node, true);
             break;
         case NodeType::LocalDeclaration:
-            visitDeclaration(static_cast<const ast::LocalDeclarationStatement&>(node), SymbolType::Local, true);
+            visitDeclaration(node, SymbolType::Local, true);
             break;
         case NodeType::GlobalDeclaration:
-            visitDeclaration(static_cast<const ast::GlobalDeclarationStatement&>(node), SymbolType::Global, false);
+            visitDeclaration(node, SymbolType::Global, false);
             break;
         case NodeType::GlobalAllDeclaration:
-            visitGlobalAll(static_cast<const ast::GlobalAllDeclarationStatement&>(node));
+            visitGlobalAll(node);
             break;
         case NodeType::AssignmentStatement:
-            visitAssignment(static_cast<const ast::AssignmentStatement&>(node));
+            visitAssignment(node);
             break;
         case NodeType::FunctionDeclaration:
             visitFunctionDeclaration(node);
             break;
         case NodeType::FunctionExpression:
-            visitFunction(static_cast<const ast::FunctionExpression&>(node));
+            visitFunction(node.child("parameters"), node.child("body"), nullptr);
             break;
         case NodeType::NumericForStatement:
-            visitNumericFor(static_cast<const ast::NumericForStatement&>(node));
+            visitNumericFor(node);
             break;
         case NodeType::GenericForStatement:
-            visitGenericFor(static_cast<const ast::GenericForStatement&>(node));
+            visitGenericFor(node);
             break;
         case NodeType::WhileStatement:
-            visitWhile(static_cast<const ast::WhileStatement&>(node));
+            visitWhile(node);
             break;
         case NodeType::RepeatStatement:
-            visitRepeat(static_cast<const ast::RepeatStatement&>(node));
+            visitRepeat(node);
             break;
         case NodeType::IfStatement:
         case NodeType::ElseIfBranch:
-            visitBranch(static_cast<const ast::ConditionalStatement&>(node));
+            visitBranch(node);
             break;
         case NodeType::BreakStatement:
             if (loopDepth_ == 0) {
@@ -128,7 +127,7 @@ private:
             resolveLabel(node);
             break;
         case NodeType::FieldExpression:
-            visitNode(static_cast<const ast::FieldExpression&>(node).object());
+            visitNode(node.child("object"));
             break;
         case NodeType::Identifier:
             bind(node, resolveName(node));
@@ -151,28 +150,28 @@ private:
         }
     }
 
-    void visitDeclaration(const ast::DeclarationStatement& declaration, SymbolType type, bool valuesBeforeNames)
+    void visitDeclaration(const Node& declaration, SymbolType type, bool valuesBeforeNames)
     {
         if (type == SymbolType::Global) {
-            visitList(declaration.values());
+            visitList(declaration.child("values"));
             scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitOnly);
-            declareNames(declaration.names(), type);
+            declareNames(declaration.child("names"), type);
             return;
         }
 
         if (valuesBeforeNames) {
-            visitList(declaration.values());
-            declareNames(declaration.names(), type);
+            visitList(declaration.child("values"));
+            declareNames(declaration.child("names"), type);
             return;
         }
 
-        declareNames(declaration.names(), type);
-        visitList(declaration.values());
+        declareNames(declaration.child("names"), type);
+        visitList(declaration.child("values"));
     }
 
-    void visitGlobalAll(const ast::GlobalAllDeclarationStatement& declaration)
+    void visitGlobalAll(const Node& declaration)
     {
-        const Node* attribute = declaration.attribute();
+        const Node* attribute = declaration.child("attribute");
         if (attribute == nullptr) {
             scopes_.back().setFreeGlobalPolicy(FreeGlobalPolicy::ExplicitWritable);
             return;
@@ -189,67 +188,65 @@ private:
         }
     }
 
-    void visitAssignment(const ast::AssignmentStatement& assignment)
+    void visitAssignment(const Node& assignment)
     {
-        visitList(assignment.values());
-        visitAssignmentTargets(assignment.targets());
+        visitList(assignment.child("values"));
+        visitAssignmentTargets(assignment.child("targets"));
     }
 
-    void visitNumericFor(const ast::NumericForStatement& loop)
+    void visitNumericFor(const Node& loop)
     {
-        visitNode(loop.start());
-        visitNode(loop.finish());
-        visitNode(loop.step());
+        visitNode(loop.child("start"));
+        visitNode(loop.child("finish"));
+        visitNode(loop.child("step"));
         pushScope();
-        declareNode(*loop.variable(), SymbolType::LoopVariable, true);
+        declareNode(*loop.child("variable"), SymbolType::LoopVariable, true);
         ++loopDepth_;
-        visitNode(loop.body());
+        visitNode(loop.child("body"));
         --loopDepth_;
         scopes_.pop_back();
     }
 
-    void visitGenericFor(const ast::GenericForStatement& loop)
+    void visitGenericFor(const Node& loop)
     {
-        visitList(loop.iterators());
+        visitList(loop.child("iterators"));
         pushScope();
-        declareNames(loop.names(), SymbolType::LoopVariable);
+        declareNames(loop.child("names"), SymbolType::LoopVariable);
         ++loopDepth_;
-        visitNode(loop.body());
+        visitNode(loop.child("body"));
         --loopDepth_;
         scopes_.pop_back();
     }
 
-    void visitWhile(const ast::WhileStatement& loop)
+    void visitWhile(const Node& loop)
     {
-        visitNode(loop.condition());
+        visitNode(loop.child("condition"));
         ++loopDepth_;
-        visitNode(loop.body());
+        visitNode(loop.child("body"));
         --loopDepth_;
     }
 
-    void visitRepeat(const ast::RepeatStatement& loop)
+    void visitRepeat(const Node& loop)
     {
         ++loopDepth_;
-        visitRepeatBody(*loop.body());
-        visitNode(loop.condition());
+        visitRepeatBody(*loop.child("body"));
+        visitNode(loop.child("condition"));
         finishRepeatBody();
         --loopDepth_;
     }
 
-    void visitBranch(const ast::ConditionalStatement& branch)
+    void visitBranch(const Node& branch)
     {
         if (branch.type() == NodeType::IfStatement) {
-            const auto& ifStatement = static_cast<const ast::IfStatement&>(branch);
-            visitNode(branch.condition());
-            visitNode(ifStatement.thenBlock());
-            visitList(ifStatement.elseIfBranches());
-            visitNode(ifStatement.elseBlock());
+            visitNode(branch.child("condition"));
+            visitNode(branch.child("then"));
+            visitList(branch.child("elseif"));
+            visitNode(branch.child("else"));
             return;
         }
 
-        const auto& elseIfStatement = static_cast<const ast::ElseIfStatement&>(branch);
-        visitNode(branch.condition());
-        visitNode(elseIfStatement.body());
+        visitNode(branch.child("condition"));
+        visitNode(branch.child("body"));
     }
 
     void visitNode(const Node* node)
@@ -262,11 +259,10 @@ private:
     void visitRepeatBody(const Node& block)
     {
         pushScope();
-        const auto& repeatBlock = static_cast<const ast::BlockStatement&>(block);
-        const Node* statements = repeatBlock.statements();
+        const Node* statements = block.child("statements");
         declareLabels(statements);
         visitList(statements);
-        visitNode(repeatBlock.returnStatement());
+        visitNode(block.child("return"));
     }
 
     void finishRepeatBody()
@@ -276,8 +272,7 @@ private:
 
     void visitFunctionDeclaration(const Node& node)
     {
-        const auto& declaration = static_cast<const ast::FunctionDeclarationStatement&>(node);
-        const Node* name = declaration.name();
+        const Node* name = node.child("name");
         if (name != nullptr && name->type() == NodeType::Identifier) {
             const SymbolType type = node.value() == "local" ? SymbolType::Local : SymbolType::Global;
             if (node.value() == "global") {
@@ -287,12 +282,7 @@ private:
         } else {
             visitNode(name);
         }
-        visitFunction(declaration.parameters(), declaration.body(), name);
-    }
-
-    void visitFunction(const ast::FunctionExpression& function)
-    {
-        visitFunction(function.parameters(), function.body(), nullptr);
+        visitFunction(node.child("parameters"), node.child("body"), name);
     }
 
     void visitFunction(const Node* parameters, const Node* body, const Node* name)

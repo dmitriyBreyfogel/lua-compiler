@@ -6,12 +6,12 @@
 
 int main()
 {
-    auto expression = lua::ast::makeNode(lua::ast::NodeType::BinaryExpression, "+");
-    expression->addChild("left", lua::ast::makeNode(lua::ast::NodeType::Identifier, "a"));
-    expression->addChild("right", lua::ast::makeNode(lua::ast::NodeType::StringLiteral, "x\\\"y"));
+    auto expression = lua::ast::createNode(lua::ast::NodeType::BinaryExpression, "+");
+    expression->addChild("left", lua::ast::createNode(lua::ast::NodeType::Identifier, "a"));
+    expression->addChild("right", lua::ast::createNode(lua::ast::NodeType::StringLiteral, "x\\\"y"));
 
     std::ostringstream dot;
-    auto root = lua::ast::makeNode(lua::ast::NodeType::Block);
+    auto root = lua::ast::createNode(lua::ast::NodeType::Block);
     root->addChild("statement[0]", std::move(expression));
 
     lua::ast::DotWriter::writeTree(dot, *root, "expression");

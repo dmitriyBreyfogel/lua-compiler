@@ -8,12 +8,12 @@ namespace {
 
 lua::ast::NodePtr list()
 {
-    return lua::ast::makeNode(lua::ast::NodeType::List);
+    return lua::ast::createNode(lua::ast::NodeType::List);
 }
 
 lua::ast::NodePtr block(lua::ast::NodePtr statements)
 {
-    auto result = lua::ast::makeNode(lua::ast::NodeType::Block);
+    auto result = lua::ast::createNode(lua::ast::NodeType::Block);
     result->addChild("statements", std::move(statements));
     return result;
 }
@@ -22,7 +22,7 @@ lua::ast::NodePtr block(lua::ast::NodePtr statements)
 
 int main()
 {
-    auto forLoop = lua::ast::makeNode(lua::ast::NodeType::NumericForStatement);
+    auto forLoop = lua::ast::createNode(lua::ast::NodeType::NumericForStatement);
     lua::semantic::SemanticTransformer transformer;
     transformer.normalize(*forLoop);
     assert(forLoop->children().size() == 1);
@@ -31,36 +31,36 @@ int main()
 
     auto statements = list();
 
-    auto declaration = lua::ast::makeNode(lua::ast::NodeType::LocalDeclaration);
+    auto declaration = lua::ast::createNode(lua::ast::NodeType::LocalDeclaration);
     auto names = list();
-    auto declaredName = lua::ast::makeNode(lua::ast::NodeType::DeclarationName, "value");
+    auto declaredName = lua::ast::createNode(lua::ast::NodeType::DeclarationName, "value");
     names->addChild("item[0]", std::move(declaredName));
     declaration->addChild("names", std::move(names));
     auto values = list();
-    auto initialValue = lua::ast::makeNode(lua::ast::NodeType::Identifier, "value");
+    auto initialValue = lua::ast::createNode(lua::ast::NodeType::Identifier, "value");
     const lua::ast::Node& initialValueReference = *initialValue;
     values->addChild("item[0]", std::move(initialValue));
     declaration->addChild("values", std::move(values));
     statements->addChild("item[0]", std::move(declaration));
 
-    auto assignment = lua::ast::makeNode(lua::ast::NodeType::AssignmentStatement);
+    auto assignment = lua::ast::createNode(lua::ast::NodeType::AssignmentStatement);
     auto targets = list();
-    auto target = lua::ast::makeNode(lua::ast::NodeType::Identifier, "value");
+    auto target = lua::ast::createNode(lua::ast::NodeType::Identifier, "value");
     const lua::ast::Node& targetReference = *target;
     targets->addChild("item[0]", std::move(target));
     assignment->addChild("targets", std::move(targets));
     statements->addChild("item[1]", std::move(assignment));
 
-    auto function = lua::ast::makeNode(lua::ast::NodeType::FunctionExpression);
+    auto function = lua::ast::createNode(lua::ast::NodeType::FunctionExpression);
     function->addChild("parameters", list());
     auto functionStatements = list();
-    auto capturedValue = lua::ast::makeNode(lua::ast::NodeType::Identifier, "value");
+    auto capturedValue = lua::ast::createNode(lua::ast::NodeType::Identifier, "value");
     const lua::ast::Node& capturedReference = *capturedValue;
     functionStatements->addChild("item[0]", std::move(capturedValue));
     function->addChild("body", block(std::move(functionStatements)));
     statements->addChild("item[2]", std::move(function));
 
-    auto invalidBreak = lua::ast::makeNode(lua::ast::NodeType::BreakStatement);
+    auto invalidBreak = lua::ast::createNode(lua::ast::NodeType::BreakStatement);
     statements->addChild("item[3]", std::move(invalidBreak));
 
     auto program = block(std::move(statements));

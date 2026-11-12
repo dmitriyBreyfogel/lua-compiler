@@ -7,81 +7,52 @@ int main()
 {
     using namespace lua::ast;
 
-    NodePtr identifier = makeNode(NodeType::Identifier, "total");
-    assert(dynamic_cast<IdentifierExpression*>(identifier.get()) != nullptr);
+    NodePtr identifier = createNode(NodeType::Identifier, "total");
+    assert(identifier->type() == NodeType::Identifier);
 
-    NodePtr binary = makeNode(NodeType::BinaryExpression, "+");
-    assert(dynamic_cast<BinaryExpression*>(binary.get()) != nullptr);
-    binary->addChild("left", makeNode(NodeType::Identifier, "left"));
-    binary->addChild("right", makeNode(NodeType::IntegerLiteral, "1"));
-    const auto* binaryExpression = static_cast<const BinaryExpression*>(binary.get());
-    assert(binaryExpression->left()->value() == "left");
-    assert(binaryExpression->right()->value() == "1");
+    NodePtr binary = createNode(NodeType::BinaryExpression, "+");
+    binary->addChild("left", createNode(NodeType::Identifier, "left"));
+    binary->addChild("right", createNode(NodeType::IntegerLiteral, "1"));
+    assert(binary->child("left")->value() == "left");
+    assert(binary->child("right")->value() == "1");
 
-    NodePtr integer = makeNode(NodeType::IntegerLiteral, "42");
-    const auto* integerLiteral = dynamic_cast<IntegerLiteralExpression*>(integer.get());
-    assert(integerLiteral != nullptr);
-    assert(integerLiteral->integerValue() == 42);
+    NodePtr integer = createNode(NodeType::IntegerLiteral, "42");
+    assert(integer->value() == "42");
 
-    NodePtr floating = makeNode(NodeType::FloatLiteral, "3.5");
-    const auto* floatLiteral = dynamic_cast<FloatLiteralExpression*>(floating.get());
-    assert(floatLiteral != nullptr);
-    assert(floatLiteral->floatValue() == 3.5);
+    NodePtr floating = createNode(NodeType::FloatLiteral, "3.5");
+    assert(floating->value() == "3.5");
 
-    NodePtr string = makeNode(NodeType::StringLiteral, "hello");
-    const auto* stringLiteral = dynamic_cast<StringLiteralExpression*>(string.get());
-    assert(stringLiteral != nullptr);
-    assert(stringLiteral->text() == "hello");
+    NodePtr string = createNode(NodeType::StringLiteral, "hello");
+    assert(string->value() == "hello");
 
-    NodePtr boolean = makeNode(NodeType::BooleanLiteral, "true");
-    const auto* booleanLiteral = dynamic_cast<BooleanLiteralExpression*>(boolean.get());
-    assert(booleanLiteral != nullptr);
-    assert(booleanLiteral->booleanValue());
+    NodePtr boolean = createNode(NodeType::BooleanLiteral, "true");
+    assert(boolean->value() == "true");
 
-    NodePtr nil = makeNode(NodeType::NilLiteral);
-    assert(dynamic_cast<NilLiteralExpression*>(nil.get()) != nullptr);
+    NodePtr nil = createNode(NodeType::NilLiteral);
+    assert(nil->type() == NodeType::NilLiteral);
 
-    NodePtr declaration = makeNode(NodeType::LocalDeclaration);
-    assert(dynamic_cast<LocalDeclarationStatement*>(declaration.get()) != nullptr);
+    NodePtr declaration = createNode(NodeType::LocalDeclaration);
+    assert(declaration->type() == NodeType::LocalDeclaration);
 
-    NodePtr globalDeclaration = makeNode(NodeType::GlobalDeclaration);
-    assert(dynamic_cast<GlobalDeclarationStatement*>(globalDeclaration.get()) != nullptr);
+    NodePtr globalDeclaration = createNode(NodeType::GlobalDeclaration);
+    assert(globalDeclaration->type() == NodeType::GlobalDeclaration);
 
-    NodePtr globalAllDeclaration = makeNode(NodeType::GlobalAllDeclaration);
-    assert(dynamic_cast<GlobalAllDeclarationStatement*>(globalAllDeclaration.get()) != nullptr);
+    NodePtr globalAllDeclaration = createNode(NodeType::GlobalAllDeclaration);
+    assert(globalAllDeclaration->type() == NodeType::GlobalAllDeclaration);
 
-    NodePtr loop = makeNode(NodeType::NumericForStatement);
-    assert(dynamic_cast<NumericForStatement*>(loop.get()) != nullptr);
-    loop->addChild("variable", makeNode(NodeType::Identifier, "index"));
-    loop->addChild("start", makeNode(NodeType::IntegerLiteral, "1"));
-    loop->addChild("finish", makeNode(NodeType::IntegerLiteral, "3"));
-    loop->addChild("body", makeNode(NodeType::Block));
-    const auto* numericLoop = static_cast<const NumericForStatement*>(loop.get());
-    assert(numericLoop->variable()->value() == "index");
-    assert(numericLoop->start()->value() == "1");
-    assert(numericLoop->body() != nullptr);
+    NodePtr loop = createNode(NodeType::NumericForStatement);
+    loop->addChild("variable", createNode(NodeType::Identifier, "index"));
+    loop->addChild("start", createNode(NodeType::IntegerLiteral, "1"));
+    loop->addChild("finish", createNode(NodeType::IntegerLiteral, "3"));
+    loop->addChild("body", createNode(NodeType::Block));
+    assert(loop->child("variable")->value() == "index");
+    assert(loop->child("start")->value() == "1");
+    assert(loop->child("body") != nullptr);
 
-    NodePtr genericLoop = makeNode(NodeType::GenericForStatement);
-    assert(dynamic_cast<GenericForStatement*>(genericLoop.get()) != nullptr);
+    NodePtr genericLoop = createNode(NodeType::GenericForStatement);
+    assert(genericLoop->type() == NodeType::GenericForStatement);
 
-    NodePtr whileLoop = makeNode(NodeType::WhileStatement);
-    assert(dynamic_cast<WhileStatement*>(whileLoop.get()) != nullptr);
-
-    NodePtr repeatLoop = makeNode(NodeType::RepeatStatement);
-    assert(dynamic_cast<RepeatStatement*>(repeatLoop.get()) != nullptr);
-
-    NodePtr ifStatement = makeNode(NodeType::IfStatement);
-    assert(dynamic_cast<IfStatement*>(ifStatement.get()) != nullptr);
-
-    NodePtr elseIfStatement = makeNode(NodeType::ElseIfBranch);
-    assert(dynamic_cast<ElseIfStatement*>(elseIfStatement.get()) != nullptr);
-
-    NodePtr callStatement = makeNode(NodeType::CallStatement);
-    assert(dynamic_cast<FunctionCallStatement*>(callStatement.get()) != nullptr);
-
-    NodePtr block = makeNode(NodeType::Block);
-    assert(dynamic_cast<BlockStatement*>(block.get()) != nullptr);
-    block->addChild("statements", makeNode(NodeType::List));
-    const auto* blockStatement = static_cast<const BlockStatement*>(block.get());
-    assert(blockStatement->statements()->type() == NodeType::List);
+    NodePtr block = createNode(NodeType::Block);
+    block->addChild("statements", createNode(NodeType::List));
+    assert(block->child("statements")->type() == NodeType::List);
 }
