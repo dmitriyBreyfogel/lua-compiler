@@ -4,7 +4,7 @@ Found keyword: do
 Found keyword: else
 Found keyword: elseif
 Found keyword: end
-Found keyword: false
+Found boolean: false
 Found keyword: for
 Found keyword: function
 Found keyword: global
@@ -18,6 +18,6 @@ Found keyword: or
 Found keyword: repeat
 Found keyword: return
 Found keyword: then
-Found keyword: true
+Found boolean: true
 Found keyword: until
 Found keyword: while

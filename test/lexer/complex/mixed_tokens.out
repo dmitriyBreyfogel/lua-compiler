@@ -25,7 +25,7 @@ Found string: one
 Found comma: ,
 Found identifier: key
 Found operator: =
-Found keyword: false
+Found boolean: false
 Found right brace: }
 Found label separator: ::
 Found identifier: start
@@ -39,7 +39,7 @@ Found identifier: print
 Found left parenthesis: (
 Found identifier: result
 Found comma: ,
-Found keyword: true
+Found boolean: true
 Found comma: ,
 Found keyword: nil
 Found right parenthesis: )

@@ -18,10 +18,12 @@ namespace {
 using lua::ast::Node;
 using lua::ast::NodeType;
 
-Node* createNode(NodeType type, std::string value = {})
+Node* createParserNode(NodeType type, std::string value = {})
 {
     return lua::ast::createNode(type, std::move(value)).release();
 }
+
+#define createNode createParserNode
 
 Node* makeList()
 {
