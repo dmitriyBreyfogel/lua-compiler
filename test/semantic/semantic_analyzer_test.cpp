@@ -77,4 +77,29 @@ int main()
     assert(result.isUpvalue(capturedReference));
     assert(result.diagnostics().size() == 1);
     assert(result.diagnostics()[0].message == "break outside loop");
+
+    auto globalNames = list();
+    globalNames->addChild("item[0]", lua::ast::createNode(lua::ast::NodeType::DeclarationName, "known"));
+    auto globalDeclaration = lua::ast::createNode(lua::ast::NodeType::GlobalDeclaration);
+    globalDeclaration->addChild("names", std::move(globalNames));
+
+    auto unknownReference = lua::ast::createNode(lua::ast::NodeType::Identifier, "unknown");
+    const lua::ast::Node& unknownReferenceNode = *unknownReference;
+    auto unknownTargets = list();
+    unknownTargets->addChild("item[0]", std::move(unknownReference));
+    auto unknownValues = list();
+    unknownValues->addChild("item[0]", lua::ast::createNode(lua::ast::NodeType::IntegerLiteral, "1"));
+    auto unknownAssignment = lua::ast::createNode(lua::ast::NodeType::AssignmentStatement);
+    unknownAssignment->addChild("targets", std::move(unknownTargets));
+    unknownAssignment->addChild("values", std::move(unknownValues));
+
+    auto unknownStatements = list();
+    unknownStatements->addChild("item[0]", std::move(globalDeclaration));
+    unknownStatements->addChild("item[1]", std::move(unknownAssignment));
+    auto unknownProgram = block(std::move(unknownStatements));
+    const lua::semantic::SemanticResult unknownResult = analyzer.analyze(*unknownProgram);
+
+    assert(unknownResult.bindingFor(unknownReferenceNode) == nullptr);
+    assert(unknownResult.diagnostics().size() == 1);
+    assert(unknownResult.diagnostics()[0].message == "unknown global: unknown");
 }

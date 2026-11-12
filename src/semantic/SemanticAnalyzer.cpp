@@ -130,7 +130,9 @@ private:
             visitNode(node.child("object"));
             break;
         case NodeType::Identifier:
-            bind(node, resolveName(node));
+            if (const std::uint64_t symbolId = resolveName(node); symbolId != 0) {
+                bind(node, symbolId);
+            }
             break;
         case NodeType::VarargExpression:
             if (varargDepth_ == 0) {
@@ -502,7 +504,7 @@ const std::vector<Diagnostic>& SemanticResult::diagnostics() const
 const Symbol* SemanticResult::bindingFor(const ast::Node& node) const
 {
     const auto found = bindings_.find(node.id());
-    if (found == bindings_.end()) {
+    if (found == bindings_.end() || found->second == 0 || found->second > symbols_.size()) {
         return nullptr;
     }
     return &symbols_[found->second - 1];
