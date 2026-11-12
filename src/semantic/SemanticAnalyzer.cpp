@@ -3,8 +3,6 @@
 
 namespace lua::semantic {
 
-namespace {
-
 using ast::Node;
 using ast::NodeType;
 
@@ -432,8 +430,6 @@ private:
     int functionDepth_ = 0;
     int varargDepth_ = 0;
 };
-
-}
 
 const std::vector<Symbol>& SemanticResult::symbols() const
 {

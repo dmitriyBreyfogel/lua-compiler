@@ -10,6 +10,8 @@
 
 namespace lua::semantic {
 
+class Analyzer;
+
 enum class SymbolType {
     Local,
     Global,
@@ -38,7 +40,9 @@ public:
     const Symbol* bindingFor(const ast::Node& node) const;
     bool isUpvalue(const ast::Node& node) const;
 
-public:
+private:
+    friend class Analyzer;
+
     std::vector<Symbol> symbols_;
     std::vector<Diagnostic> diagnostics_;
     std::unordered_map<std::uint64_t, std::uint64_t> bindings_;
