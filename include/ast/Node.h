@@ -63,6 +63,8 @@ public:
     NodeType type() const;
     const std::string& value() const;
     const std::vector<Child>& children() const;
+    Node* child(const std::string& role);
+    const Node* child(const std::string& role) const;
 
     Node& addChild(std::string role, NodePtr child);
     Node& addChild(std::string role, Node* child);

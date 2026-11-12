@@ -25,21 +25,11 @@ public:
     SemanticResult run(const Node& block)
     {
         pushScope();
-        visitBlock(block, false);
+        visitBlock(static_cast<const ast::BlockStatement&>(block), false);
         return std::move(result_);
     }
 
 private:
-    const Node* child(const Node& node, const std::string& role)
-    {
-        for (const ast::Child& item : node.children()) {
-            if (item.role == role) {
-                return item.node.get();
-            }
-        }
-        return nullptr;
-    }
-
     void visitList(const Node* list)
     {
         if (list == nullptr) {
@@ -51,16 +41,16 @@ private:
         }
     }
 
-    void visitBlock(const Node& block, bool createScope)
+    void visitBlock(const ast::BlockStatement& block, bool createScope)
     {
         if (createScope) {
             pushScope();
         }
 
-        const Node* statements = child(block, "statements");
+        const Node* statements = block.statements();
         declareLabels(statements);
         visitList(statements);
-        visitNode(child(block, "return"));
+        visitNode(block.returnStatement());
 
         if (createScope) {
             scopes_.pop_back();
@@ -80,7 +70,7 @@ private:
                 if (scopes_.back().labels.count(statement.value()) != 0) {
                     error(statement, "duplicate label: " + statement.value());
                 } else {
-                    const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement);
+                    const std::uint64_t id = declare(statement.value(), SymbolType::Label, statement.id(), false);
                     scopes_.back().labels[statement.value()] = {id, localCount};
                     bind(statement, id);
                 }
@@ -93,7 +83,8 @@ private:
     int localDeclarations(const Node& statement)
     {
         if (statement.type() == NodeType::LocalDeclaration) {
-            const Node* names = child(statement, "names");
+            const auto& declaration = static_cast<const ast::DeclarationStatement&>(statement);
+            const Node* names = declaration.names();
             return names == nullptr ? 0 : static_cast<int>(names->children().size());
         }
         if (statement.type() == NodeType::FunctionDeclaration && statement.value() == "local") {
@@ -106,70 +97,40 @@ private:
     {
         switch (node.type()) {
         case NodeType::Block:
-            visitBlock(node, true);
+            visitBlock(static_cast<const ast::BlockStatement&>(node), true);
             break;
         case NodeType::LocalDeclaration:
-            visitList(child(node, "values"));
-            declareNames(child(node, "names"), SymbolType::Local);
+            visitDeclaration(static_cast<const ast::DeclarationStatement&>(node), SymbolType::Local, true);
             break;
         case NodeType::GlobalDeclaration:
-            declareNames(child(node, "names"), SymbolType::Global);
-            visitList(child(node, "values"));
+            visitDeclaration(static_cast<const ast::DeclarationStatement&>(node), SymbolType::Global, false);
             break;
         case NodeType::GlobalAllDeclaration:
             break;
         case NodeType::AssignmentStatement:
-            visitList(child(node, "values"));
-            visitAssignmentTargets(child(node, "targets"));
+            visitAssignment(static_cast<const ast::AssignmentStatement&>(node));
             break;
         case NodeType::FunctionDeclaration:
             visitFunctionDeclaration(node);
             break;
         case NodeType::FunctionExpression:
-            visitFunction(node);
+            visitFunction(static_cast<const ast::FunctionExpression&>(node));
             break;
         case NodeType::NumericForStatement:
-            visitNode(child(node, "start"));
-            visitNode(child(node, "finish"));
-            visitNode(child(node, "step"));
-            pushScope();
-            declareNode(*child(node, "variable"), SymbolType::LoopVariable);
-            ++loopDepth_;
-            visitNode(child(node, "body"));
-            --loopDepth_;
-            scopes_.pop_back();
+            visitNumericFor(static_cast<const ast::LoopStatement&>(node));
             break;
         case NodeType::GenericForStatement:
-            visitList(child(node, "iterators"));
-            pushScope();
-            declareNames(child(node, "names"), SymbolType::LoopVariable);
-            ++loopDepth_;
-            visitNode(child(node, "body"));
-            --loopDepth_;
-            scopes_.pop_back();
+            visitGenericFor(static_cast<const ast::LoopStatement&>(node));
             break;
         case NodeType::WhileStatement:
-            visitNode(child(node, "condition"));
-            ++loopDepth_;
-            visitNode(child(node, "body"));
-            --loopDepth_;
+            visitWhile(static_cast<const ast::LoopStatement&>(node));
             break;
         case NodeType::RepeatStatement:
-            ++loopDepth_;
-            visitRepeatBody(*child(node, "body"));
-            visitNode(child(node, "condition"));
-            finishRepeatBody();
-            --loopDepth_;
+            visitRepeat(static_cast<const ast::LoopStatement&>(node));
             break;
         case NodeType::IfStatement:
-            visitNode(child(node, "condition"));
-            visitNode(child(node, "then"));
-            visitList(child(node, "elseif"));
-            visitNode(child(node, "else"));
-            break;
         case NodeType::ElseIfBranch:
-            visitNode(child(node, "condition"));
-            visitNode(child(node, "body"));
+            visitBranch(static_cast<const ast::BranchStatement&>(node));
             break;
         case NodeType::BreakStatement:
             if (loopDepth_ == 0) {
@@ -180,7 +141,7 @@ private:
             resolveLabel(node);
             break;
         case NodeType::FieldExpression:
-            visitNode(child(node, "object"));
+            visitNode(static_cast<const ast::FieldExpression&>(node).object());
             break;
         case NodeType::Identifier:
             bind(node, resolveName(node));
@@ -191,11 +152,89 @@ private:
             }
             break;
         default:
-            for (const ast::Child& item : node.children()) {
-                visit(*item.node);
-            }
+            visitChildren(node);
             break;
         }
+    }
+
+    void visitChildren(const Node& node)
+    {
+        for (const ast::Child& item : node.children()) {
+            visit(*item.node);
+        }
+    }
+
+    void visitDeclaration(const ast::DeclarationStatement& declaration, SymbolType type, bool valuesBeforeNames)
+    {
+        if (valuesBeforeNames) {
+            visitList(declaration.values());
+            declareNames(declaration.names(), type);
+            return;
+        }
+
+        declareNames(declaration.names(), type);
+        visitList(declaration.values());
+    }
+
+    void visitAssignment(const ast::AssignmentStatement& assignment)
+    {
+        visitList(assignment.values());
+        visitAssignmentTargets(assignment.targets());
+    }
+
+    void visitNumericFor(const ast::LoopStatement& loop)
+    {
+        visitNode(loop.start());
+        visitNode(loop.finish());
+        visitNode(loop.step());
+        pushScope();
+        declareNode(*loop.variable(), SymbolType::LoopVariable);
+        ++loopDepth_;
+        visitNode(loop.body());
+        --loopDepth_;
+        scopes_.pop_back();
+    }
+
+    void visitGenericFor(const ast::LoopStatement& loop)
+    {
+        visitList(loop.iterators());
+        pushScope();
+        declareNames(loop.names(), SymbolType::LoopVariable);
+        ++loopDepth_;
+        visitNode(loop.body());
+        --loopDepth_;
+        scopes_.pop_back();
+    }
+
+    void visitWhile(const ast::LoopStatement& loop)
+    {
+        visitNode(loop.condition());
+        ++loopDepth_;
+        visitNode(loop.body());
+        --loopDepth_;
+    }
+
+    void visitRepeat(const ast::LoopStatement& loop)
+    {
+        ++loopDepth_;
+        visitRepeatBody(*loop.body());
+        visitNode(loop.condition());
+        finishRepeatBody();
+        --loopDepth_;
+    }
+
+    void visitBranch(const ast::BranchStatement& branch)
+    {
+        if (branch.type() == NodeType::IfStatement) {
+            visitNode(branch.condition());
+            visitNode(branch.thenBlock());
+            visitList(branch.elseIfBranches());
+            visitNode(branch.elseBlock());
+            return;
+        }
+
+        visitNode(branch.condition());
+        visitNode(branch.body());
     }
 
     void visitNode(const Node* node)
@@ -208,10 +247,11 @@ private:
     void visitRepeatBody(const Node& block)
     {
         pushScope();
-        const Node* statements = child(block, "statements");
+        const auto& repeatBlock = static_cast<const ast::BlockStatement&>(block);
+        const Node* statements = repeatBlock.statements();
         declareLabels(statements);
         visitList(statements);
-        visitNode(child(block, "return"));
+        visitNode(repeatBlock.returnStatement());
     }
 
     void finishRepeatBody()
@@ -221,16 +261,22 @@ private:
 
     void visitFunctionDeclaration(const Node& node)
     {
-        const Node* name = child(node, "name");
+        const auto& declaration = static_cast<const ast::FunctionDeclarationStatement&>(node);
+        const Node* name = declaration.name();
         if (name != nullptr && name->type() == NodeType::Identifier) {
             declareNode(*name, node.value() == "local" ? SymbolType::Local : SymbolType::Global);
         } else {
             visitNode(name);
         }
-        visitFunction(node);
+        visitFunction(declaration.parameters(), declaration.body(), name);
     }
 
-    void visitFunction(const Node& node)
+    void visitFunction(const ast::FunctionExpression& function)
+    {
+        visitFunction(function.parameters(), function.body(), nullptr);
+    }
+
+    void visitFunction(const Node* parameters, const Node* body, const Node* name)
     {
         ++functionDepth_;
         const int previousLoopDepth = loopDepth_;
@@ -238,12 +284,10 @@ private:
         loopDepth_ = 0;
         varargDepth_ = 0;
         pushScope();
-        const Node* name = child(node, "name");
         if (name != nullptr && name->type() == NodeType::FieldExpression && name->value() == "method") {
-            ast::NodePtr self = ast::makeNode(NodeType::Identifier, "self");
-            declareNode(*self, SymbolType::Parameter);
+            declare("self", SymbolType::Parameter, name->id(), false);
+            scopes_.back().names["self"] = result_.symbols_.back().id;
         }
-        const Node* parameters = child(node, "parameters");
         bool acceptsVararg = false;
         if (parameters != nullptr) {
             for (const ast::Child& item : parameters->children()) {
@@ -261,7 +305,7 @@ private:
         if (acceptsVararg) {
             ++varargDepth_;
         }
-        visitNode(child(node, "body"));
+        visitNode(body);
         if (acceptsVararg) {
             --varargDepth_;
         }
@@ -289,7 +333,7 @@ private:
             error(node, "duplicate declaration: " + name);
             return;
         }
-        const std::uint64_t id = declare(name, type, node);
+        const std::uint64_t id = declare(name, type, node.id(), isReadOnly(node));
         scope.names[name] = id;
         if (type == SymbolType::Local) {
             ++scope.localCount;
@@ -297,10 +341,10 @@ private:
         bind(node, id);
     }
 
-    std::uint64_t declare(const std::string& name, SymbolType type, const Node& node)
+    std::uint64_t declare(const std::string& name, SymbolType type, std::uint64_t declarationId, bool readOnly)
     {
         const std::uint64_t id = result_.symbols_.size() + 1;
-        result_.symbols_.push_back({id, name, type, node.id(), isReadOnly(node)});
+        result_.symbols_.push_back({id, name, type, declarationId, readOnly});
         return id;
     }
 
@@ -355,7 +399,7 @@ private:
             return found->second;
         }
 
-        const std::uint64_t id = declare(name, SymbolType::Global, node);
+        const std::uint64_t id = declare(name, SymbolType::Global, node.id(), false);
         global.names[name] = id;
         return id;
     }

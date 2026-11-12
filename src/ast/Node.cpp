@@ -35,6 +35,26 @@ const std::vector<Child>& Node::children() const
     return children_;
 }
 
+Node* Node::child(const std::string& role)
+{
+    for (Child& item : children_) {
+        if (item.role == role) {
+            return item.node.get();
+        }
+    }
+    return nullptr;
+}
+
+const Node* Node::child(const std::string& role) const
+{
+    for (const Child& item : children_) {
+        if (item.role == role) {
+            return item.node.get();
+        }
+    }
+    return nullptr;
+}
+
 Node& Node::addChild(std::string role, NodePtr child)
 {
     children_.push_back({std::move(role), std::move(child)});
