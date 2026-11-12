@@ -8,6 +8,7 @@
 #include "ast/DotWriter.h"
 #include "ast/ParseResult.h"
 #include "lua_parser.hpp"
+#include "semantic/SemanticAnalyzer.h"
 
 namespace {
 
@@ -52,10 +53,20 @@ int main(int argc, char* argv[])
     std::cout.rdbuf(originalOutput);
 
     if (parseStatus == 0) {
+        auto block = lua::ast::takeParsedBlock();
+        lua::semantic::SemanticAnalyzer analyzer;
+        const lua::semantic::SemanticResult semanticResult = analyzer.analyze(*block);
+
+        if (!semanticResult.diagnostics().empty()) {
+            for (const lua::semantic::Diagnostic& diagnostic : semanticResult.diagnostics()) {
+                std::cerr << "Semantic error: " << diagnostic.message << std::endl;
+            }
+            return 1;
+        }
+
         std::cout << "Syntax is correct\n";
 
         if (argc == 4) {
-            auto block = lua::ast::takeParsedBlock();
             std::ofstream output(argv[3]);
             if (!output.is_open()) {
                 std::cerr << "Unable to open output file: " << argv[3] << std::endl;

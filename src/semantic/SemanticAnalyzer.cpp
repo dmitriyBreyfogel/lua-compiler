@@ -114,14 +114,18 @@ private:
             visitNode(child(node, "step"));
             scopes_.push_back({});
             declareNode(*child(node, "variable"), SymbolType::LoopVariable);
+            ++loopDepth_;
             visitNode(child(node, "body"));
+            --loopDepth_;
             scopes_.pop_back();
             break;
         case NodeType::GenericForStatement:
             visitList(child(node, "iterators"));
             scopes_.push_back({});
             declareNames(child(node, "names"), SymbolType::LoopVariable);
+            ++loopDepth_;
             visitNode(child(node, "body"));
+            --loopDepth_;
             scopes_.pop_back();
             break;
         case NodeType::WhileStatement:
