@@ -319,7 +319,8 @@ private:
             error(node, "duplicate declaration: " + name);
             return;
         }
-        const std::uint64_t id = declare(name, type, node.id(), isReadOnly(node));
+        const bool readOnly = type == SymbolType::LoopVariable || isReadOnly(node);
+        const std::uint64_t id = declare(name, type, node.id(), readOnly);
         scope.defineName(name, id);
         if (type == SymbolType::Local) {
             scope.addLocal();
